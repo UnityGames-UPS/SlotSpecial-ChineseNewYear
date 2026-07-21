@@ -147,10 +147,10 @@ TextureImporter:
         serializedVersion: 2
         x: 1070
         y: 777
-        width: 1051
+        width: 2331
         height: 442
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -163,33 +163,11 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
-    - serializedVersion: 2
-      name: YOU WON_1
-      rect:
-        serializedVersion: 2
-        x: 2225
-        y: 777
-        width: 1165
-        height: 442
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7216e81dbbbe1e180800000000000000
-      internalID: -9087723381149769433
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
     outline: []
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 78ad711b6b34f4f24ac1710c1f54391f
     internalID: 0
     vertices: []
     indices: 

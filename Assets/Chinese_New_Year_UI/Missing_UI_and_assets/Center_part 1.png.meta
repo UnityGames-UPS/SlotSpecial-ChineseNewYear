@@ -1,16 +1,10 @@
 fileFormatVersion: 2
-guid: f5c68241fbb9e432ca2bbcb9743b8551
+guid: eb94507c0726b4d4e8510cffdb417347
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -101608803731155292
-    second: FREE SPINS_0
-  - first:
-      213: 8549283935026712141
-    second: FREE SPINS_1
-  - first:
-      213: 8685287032107634783
-    second: FREE SPINS_2
+      213: 8991317212059765308
+    second: Center_part 1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -145,23 +139,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: FREE SPINS_0
+      name: Center_part 1_0
       rect:
         serializedVersion: 2
-        x: 1238
-        y: 850
-        width: 1988
-        height: 296
+        x: 21
+        y: 17
+        width: 235
+        height: 240
       alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+      pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 4a65d83d453079ef0800000000000000
-      internalID: -101608803731155292
+      spriteID: c3a8da7cd5397cc70800000000000000
+      internalID: 8991317212059765308
       vertices: []
       indices: 
       edges: []
@@ -170,7 +164,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 9d6286ff91231447990e860293bc7e57
+    spriteID: 
     internalID: 0
     vertices: []
     indices: 
@@ -180,9 +174,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      FREE SPINS_0: -101608803731155292
-      FREE SPINS_1: 8549283935026712141
-      FREE SPINS_2: 8685287032107634783
+      Center_part 1_0: 8991317212059765308
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
