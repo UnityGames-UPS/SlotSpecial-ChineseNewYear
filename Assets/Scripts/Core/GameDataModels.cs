@@ -26,45 +26,55 @@ public class ServerGameData
 [Serializable]
 public class ServerFeatures
 {
-    public FreeSpinFeature freeSpins;
-    public BuyFeature buyFeature;
+    public USpinFeature uSpin;
+    public MoneyBagFeature moneyBag;
+    public FreeGamesFeature freeGames;
     public int betMultiplier;
     public int maxWinMultiplier;
     public int minWinMultiplier;
 }
 
 [Serializable]
-public class FreeSpinFeature
+public class USpinFeature
 {
     public bool enabled;
-    public int initialSpins;
-    public bool stickyWilds;
-    public bool wildMultiplierPersist;
-    public OverlayScatterFeature overlayScatter;
+    public int minTrigger;
+    public int symbolId;
+    public List<USpinSegment> segments;
 }
 
 [Serializable]
-public class OverlayScatterFeature
+public class USpinSegment
+{
+    public string type;
+    public double credits;
+    public int freeGames;
+}
+
+[Serializable]
+public class MoneyBagFeature
 {
     public bool enabled;
-    public List<int> values;
-    public ExtraSpinsData extraSpins;
+    public int minTrigger;
+    public int symbolId;
+    public int bagCount;
+}
+
+[Serializable]
+public class FreeGamesFeature
+{
+    public bool enabled;
+    public double payMultiplier;
+    public int maxTotalFreeGames;
 }
 
 [Serializable]
 public class ExtraSpinsData
 {
-    [JsonProperty("2")] public int _2; // For 2 scatters
-    [JsonProperty("3")] public int _3; // For 3 scatters
-    [JsonProperty("4")] public int _4; // For 4 scatters
-    [JsonProperty("5")] public int _5; // For 5 scatters
-}
-
-[Serializable]
-public class BuyFeature
-{
-    public bool enabled;
-    public double costMultiplier;
+    [JsonProperty("2")] public int _2; // Keep for safety/compatibility with UI
+    [JsonProperty("3")] public int _3;
+    [JsonProperty("4")] public int _4;
+    [JsonProperty("5")] public int _5;
 }
 
 [Serializable]
@@ -84,7 +94,9 @@ public class ServerSymbolInfo
 {
     public int id;
     public string name;
-    public List<double> multiplier; // Note: "multiplier" not "multipliers"
+    public List<double> multiplier; // Keep for fallback compatibility
+    public double payout;
+    public string description;
 }
 
 [Serializable]
@@ -102,9 +114,9 @@ public class ServerSpinResponse
 {
     public string id = "ResultData";
     public bool success;
+    public List<List<string>> matrix; // Root level matrix sent by server
     public ServerPlayerBalance player;
     public ServerPayload payload;
-    public ServerFeaturesResult features;
 }
 
 [Serializable]
@@ -116,74 +128,64 @@ public class ServerPlayerBalance
 [Serializable]
 public class ServerPayload
 {
-    public List<List<string>> reels;        // Server sends STRINGS not ints!
-    public List<ServerWinLine> winningLines; // Server uses "winningLines"
-    public double totalWin;                  // Server uses "totalWin"
+    public List<List<string>> reels;        // Keep for fallback compatibility
+    public double totalWin;                  // Keep for fallback compatibility
     public int scatterCount;
     public bool scatterTriggered;
-    public ServerFreeSpinState freeSpinState; // Can be null
     public bool isRoundOver;                 // True when free spin round is over
     public double totalRoundWin;             // Total round win (at payload level when isRoundOver)
+
+    // CNY fields
+    public double winAmount;
+    public double grandTotalWin;
+    public double netReturnRatio;
+    public List<ServerWaysWin> waysWins;
+    public ServerUSpinResult uSpin;
+    public ServerMoneyBagResult moneyBag;
+    public ServerFreeGamesResult freeGames;
 }
 
 [Serializable]
-public class ServerFreeSpinState
+public class ServerWaysWin
 {
-    public bool isActive;
-    public int spinsRemaining;
-    public int spinsUsed;
-    public double totalRoundWin;
-    public bool isBought;
-    public Dictionary<string, int> stickyWilds;
-}
-
-[Serializable]
-public class ServerWinLine
-{
-    public int lineIndex;                    // Server uses "lineIndex"
-    public List<List<int>> positions;        // Server format: [[row,col], [row,col]]
-    public string symbolId;                  // Server sends STRING!
+    public int symbolId;
     public int matchCount;
+    public int waysCount;
+    public List<ServerPosition> matchedPositions;
     public double basePayout;
-    public double payout;
-    public int wildMultiplier;
-    public List<WildDetail> wildDetails;
+    public double appliedMultiplier;
+    public double winInCredits;
+    public double winInCash;
+    public string winType;
 }
 
 [Serializable]
-public class WildDetail
+public class ServerPosition
 {
-    public int col;
     public int row;
-    public int multiplier;
+    public int col;
 }
 
 [Serializable]
-public class ServerFeaturesResult
-{
-    public ServerFreeSpinResult freeSpins;
-}
-
-[Serializable]
-public class ServerFreeSpinResult
+public class ServerUSpinResult
 {
     public bool triggered;
-    public int spinsAwarded;
-    public bool isFreeSpin;
-    public bool isRoundOver;
-    public int spinsRemaining;
-    public int spinsUsed;  // Added: Server sends this in features.freeSpins
-    public int stickyWildsCount;
-    public ServerOverlayScatter overlayScatter;
+    public int segmentIndex;
 }
 
 [Serializable]
-public class ServerOverlayScatter
+public class ServerMoneyBagResult
 {
-    public bool isTriggered;
-    public int count;
-    public int extraSpins;
-    public List<List<int>> positions;
+    public bool triggered;
+}
+
+[Serializable]
+public class ServerFreeGamesResult
+{
+    public bool triggered;
+    public int totalAwarded;
+    public int played;
+    public double totalFreeGamesWin;
 }
 
 // ============================================================================
@@ -204,74 +206,8 @@ public class SpinPayload
     public bool isFreeSpin;
 }
 
-[Serializable]
-public class BuyFeatureRequest
-{
-    public string type = "BUY_FEATURE";
-    public BuyFeaturePayload payload;
-}
-
-[Serializable]
-public class BuyFeaturePayload
-{
-    public int betIndex;
-}
 
 
-[Serializable]
-public class BetHistoryRequest
-{
-    public string type = "BET_HISTORY";
-    public string userId; // Will be set from server session
-    public BetHistoryPayload payload;
-}
-
-[Serializable]
-public class BetHistoryPayload
-{
-    public int page = 1;
-    public int limit = 10;
-}
-
-[Serializable]
-public class BetHistoryResponse
-{
-    public string id = "BetHistory";
-    public bool success;
-    public BetHistoryData payload;
-}
-
-[Serializable]
-public class BetHistoryData
-{
-    public List<BetHistoryItem> betHistory;
-    public PaginationInfo pagination;
-}
-
-[Serializable]
-public class BetHistoryItem
-{
-    public string betSlipNumber;
-    public string gameMode;
-    public double startingBalance;
-    public double bet;
-    public double winLoss;
-    public double balance;
-    public string date; // ISO format: "2026-04-23T14:29:55.265Z"
-}
-
-[Serializable]
-public class PaginationInfo
-{
-    public int page;
-    public int limit;
-    public int total;
-    public double totalBetAmount;
-    public double totalWinLoss;
-    public int totalPages;
-
-
-}
 
 #endregion
 
@@ -281,32 +217,24 @@ public class PaginationInfo
 public class GameConfig
 {
     public int reelCount = 5;
-    public int rowCount = 4;
+    public int rowCount = 3;
     public int symbolCount = 13;
-    public int paylineCount = 40;
+    public int paylineCount = 243;
     public List<List<int>> paylines;
     public List<double> availableBets;
     public List<SymbolInfo> symbols;
 
     // Wild configuration
-    public int wildSymbolId = 11;      // Base wild (1x)
-    public int wild2xSymbolId = 13;     // Wild 2x multiplier
-    public int wild3xSymbolId = 14;     // Wild 3x multiplier
-    public int wild5xSymbolId = 15;     // Wild 5x multiplier
-    public List<int> wildMultipliers = new List<int> { 1, 2, 3, 5 };
+    public int wildSymbolId = 10;      // Base wild (10)
 
     // Scatter configuration
-    public int scatterSymbolId = 12;
+    public int scatterSymbolId = 11;   // USpin is ID 11
 
-    // Buy Feature configuration
-    public bool buyFeatureEnabled;
-    public double buyFeatureCostMultiplier;
-
-    public int betMultiplier = 100;
+    public int betMultiplier = 1;      // CNY is cash-bet based, multiplier default is 1
     public int maxWinMultiplier = 10000;
     public int minWinMultiplier = 10;
-    public int initialFreeSpins = 8;
-    public ExtraSpinsData extraSpinsData;
+    public int initialFreeSpins = 12;
+    public ExtraSpinsData extraSpinsData; // Keep to avoid compilation error in UI
 }
 
 [Serializable]
@@ -317,7 +245,7 @@ public class SymbolInfo
     public List<double> multipliers;
     public bool isWild;
     public bool isScatter;
-    public int wildMultiplier;
+    public int wildMultiplier = 1;
 }
 
 #endregion
@@ -340,8 +268,8 @@ public class SpinResult
     public PlayerData playerData;
     public FreeSpinData freeSpinData;
     public ScatterData scatterData;
-    public OverlayScatterData overlayScatterData;
-    public Dictionary<string, int> stickyWilds;
+    public OverlayScatterData overlayScatterData; // Keep for safety/UI compilation
+    public Dictionary<string, int> stickyWilds;  // Keep for safety/UI compilation
 
     // Server-authoritative free spin state
     public int serverSpinsRemaining;
@@ -355,7 +283,7 @@ public class WinLine
 {
     public int lineId;
     public int symbolId;
-    public List<int> positions;  // Flat list: [0, 5, 10, 15, 20]
+    public List<int> positions;  // Flat list: [row * 5 + col]
     public double winAmount;
 }
 
@@ -432,7 +360,7 @@ public static class InitDataConverter
         var config = new GameConfig
         {
             reelCount = 5,
-            rowCount = 4,
+            rowCount = (serverData.gameData.totalLines == 243) ? 3 : (serverData.gameData.totalLines == 1024 ? 4 : 3),
             symbolCount = serverData.uiData.paylines.symbols.Count,
             paylineCount = serverData.gameData.totalLines,
             paylines = serverData.gameData.lines,
@@ -446,29 +374,74 @@ public static class InitDataConverter
             {
                 id = serverSymbol.id,
                 name = serverSymbol.name,
-                multipliers = serverSymbol.multiplier ?? new List<double>(),
+                multipliers = new List<double>(),
                 isWild = serverSymbol.name.ToLower().Contains("wild"),
-                isScatter = serverSymbol.name.ToLower().Contains("scatter"),
-                wildMultiplier = 1
+                isScatter = serverSymbol.name.ToLower().Contains("scatter") || 
+                            serverSymbol.name.ToLower().Contains("uspin") || 
+                            serverSymbol.name.ToLower().Contains("moneybag")
             };
 
+            // Calculate multipliers from payout
+            double baseBetCredits = 25.0; // 0.25 cash bet corresponds to 25 credits
+            double m5 = serverSymbol.payout / baseBetCredits;
+            double m4 = m5 * 0.33; // 4 matches is ~1/3 of 5 matches
+            double m3 = m5 * 0.067; // 3 matches is ~1/15 of 5 matches
+
+            // Adjust for specific symbols
+            if (serverSymbol.name.ToLower().Contains("ten") || serverSymbol.name.ToLower().Contains("nine"))
+            {
+                m5 = 30.0 / baseBetCredits;  // 1.2
+                m4 = 10.0 / baseBetCredits;  // 0.4
+                m3 = 2.0 / baseBetCredits;   // 0.08
+            }
+            else if (serverSymbol.name.ToLower().Contains("j") || serverSymbol.name.ToLower().Contains("q"))
+            {
+                m5 = 40.0 / baseBetCredits;  // 1.6
+                m4 = 12.0 / baseBetCredits;  // 0.48
+                m3 = 3.0 / baseBetCredits;   // 0.12
+            }
+            else if (serverSymbol.name.ToLower().Contains("k") || serverSymbol.name.ToLower().Contains("a"))
+            {
+                m5 = 50.0 / baseBetCredits;  // 2.0
+                m4 = 15.0 / baseBetCredits;  // 0.6
+                m3 = 4.0 / baseBetCredits;   // 0.16
+            }
+            else if (serverSymbol.name.ToLower().Contains("coin"))
+            {
+                m5 = 100.0 / baseBetCredits; // 4.0
+                m4 = 30.0 / baseBetCredits;  // 1.2
+                m3 = 6.0 / baseBetCredits;   // 0.24
+            }
+            else if (serverSymbol.name.ToLower().Contains("moneypouch"))
+            {
+                m5 = 125.0 / baseBetCredits; // 5.0
+                m4 = 40.0 / baseBetCredits;  // 1.6
+                m3 = 8.0 / baseBetCredits;   // 0.32
+            }
+            else if (serverSymbol.name.ToLower().Contains("hammer"))
+            {
+                m5 = 150.0 / baseBetCredits; // 6.0
+                m4 = 50.0 / baseBetCredits;  // 2.0
+                m3 = 10.0 / baseBetCredits;  // 0.4
+            }
+            else if (serverSymbol.name.ToLower().Contains("lantern"))
+            {
+                m5 = 250.0 / baseBetCredits; // 10.0
+                m4 = 80.0 / baseBetCredits;  // 3.2
+                m3 = 15.0 / baseBetCredits;  // 0.6
+            }
+
+            symbolInfo.multipliers = new List<double> { m5, m4, m3 };
             config.symbols.Add(symbolInfo);
 
             if (symbolInfo.isWild)
             {
                 config.wildSymbolId = symbolInfo.id;
             }
-            if (symbolInfo.isScatter)
+            if (symbolInfo.isScatter && symbolInfo.name.ToLower().Contains("uspin"))
             {
                 config.scatterSymbolId = symbolInfo.id;
             }
-        }
-
-        // Buy Feature config
-        if (serverData.features?.buyFeature != null)
-        {
-            config.buyFeatureEnabled = serverData.features.buyFeature.enabled;
-            config.buyFeatureCostMultiplier = serverData.features.buyFeature.costMultiplier;
         }
 
         if (serverData.features != null)
@@ -477,13 +450,9 @@ public static class InitDataConverter
             config.maxWinMultiplier = serverData.features.maxWinMultiplier;
             config.minWinMultiplier = serverData.features.minWinMultiplier;
 
-            if (serverData.features.freeSpins != null)
+            if (serverData.features.freeGames != null)
             {
-                config.initialFreeSpins = serverData.features.freeSpins.initialSpins;
-                if (serverData.features.freeSpins.overlayScatter != null)
-                {
-                    config.extraSpinsData = serverData.features.freeSpins.overlayScatter.extraSpins;
-                }
+                config.initialFreeSpins = serverData.features.freeGames.maxTotalFreeGames;
             }
         }
 
@@ -500,77 +469,65 @@ public static class InitDataConverter
     }
 
     /// <summary>
-    /// CRITICAL: Converts server response to client SpinResult
-    /// Handles string-to-int conversion, matrix transposition, and wild multiplier mapping
-    /// Server sends [row][col] (4 rows x 5 cols), Client needs [col][row] (5 cols x 4 rows)
+    /// Converts server response to client SpinResult
     /// </summary>
     internal static SpinResult ConvertServerResponseToSpinResult(ServerSpinResponse serverResponse, double currentBalance, double betAmount, GameConfig gameConfig)
     {
-        // Use server balance directly if available
-        double newBalance = serverResponse.player?.balance ?? CalculateNewBalance(currentBalance, betAmount, serverResponse.payload.totalWin);
+        double winAmountVal = serverResponse.payload.winAmount > 0 ? serverResponse.payload.winAmount : serverResponse.payload.totalWin;
+        double newBalance = serverResponse.player?.balance ?? CalculateNewBalance(currentBalance, betAmount, winAmountVal);
 
-        // Get server free spin state values
-        int spinsRemaining = serverResponse.features?.freeSpins?.spinsRemaining ?? serverResponse.payload.freeSpinState?.spinsRemaining ?? 0;
-        int spinsUsed = serverResponse.features?.freeSpins?.spinsUsed ?? serverResponse.payload.freeSpinState?.spinsUsed ?? 0;
-        double totalRoundWin = serverResponse.payload.totalRoundWin > 0
-            ? serverResponse.payload.totalRoundWin
-            : (serverResponse.payload.freeSpinState?.totalRoundWin ?? 0);
-        bool isRoundOver = serverResponse.features?.freeSpins?.isRoundOver ?? serverResponse.payload.isRoundOver;
+        int spinsRemaining = 0;
+        int spinsUsed = 0;
+        double totalRoundWin = 0;
+        bool isRoundOver = false;
 
-        var stickyWilds = serverResponse.payload.freeSpinState?.stickyWilds;
+        if (serverResponse.payload.freeGames != null)
+        {
+            spinsRemaining = serverResponse.payload.freeGames.totalAwarded - serverResponse.payload.freeGames.played;
+            spinsUsed = serverResponse.payload.freeGames.played;
+            totalRoundWin = serverResponse.payload.freeGames.totalFreeGamesWin;
+            isRoundOver = serverResponse.payload.freeGames.played >= serverResponse.payload.freeGames.totalAwarded && serverResponse.payload.freeGames.totalAwarded > 0;
+        }
+        else
+        {
+            isRoundOver = serverResponse.payload.isRoundOver;
+            totalRoundWin = serverResponse.payload.totalRoundWin;
+        }
 
         var result = new SpinResult
         {
-            // Convert and transpose reels from server format to client format
-            resultMatrix = ConvertReelsToMatrix(serverResponse.payload.reels, serverResponse.payload.winningLines, stickyWilds, gameConfig),
+            resultMatrix = ConvertReelsToMatrix(serverResponse.payload.reels, serverResponse.matrix, serverResponse.payload.waysWins, gameConfig),
+            winAmount = winAmountVal,
+            winLines = ConvertWinningLines(serverResponse.payload.waysWins, gameConfig),
 
-            // Map totalWin to winAmount
-            winAmount = serverResponse.payload.totalWin,
-
-            // Convert winningLines to winLines
-            winLines = ConvertWinningLines(serverResponse.payload.winningLines, gameConfig),
-
-            // Update player data — use server balance directly
             playerData = new PlayerData
             {
                 balance = newBalance,
-                currentBetIndex = 0 // Will be set by GameManager
+                currentBetIndex = 0
             },
 
-            // Convert free spin data
-            freeSpinData = serverResponse.features?.freeSpins != null && serverResponse.features.freeSpins.triggered
+            freeSpinData = (serverResponse.payload.freeGames != null && serverResponse.payload.freeGames.triggered)
                 ? new FreeSpinData
                 {
                     isTriggered = true,
-                    spinsAwarded = serverResponse.features.freeSpins.spinsAwarded,
-                    remainingSpins = 0,
-                    isBought = serverResponse.payload.freeSpinState?.isBought ?? false
+                    spinsAwarded = serverResponse.payload.freeGames.totalAwarded,
+                    remainingSpins = serverResponse.payload.freeGames.totalAwarded - serverResponse.payload.freeGames.played,
+                    isBought = false
                 }
                 : null,
 
-            // Convert scatter data
             scatterData = serverResponse.payload.scatterTriggered
                 ? new ScatterData
                 {
                     isTriggered = true,
                     scatterCount = serverResponse.payload.scatterCount,
-                    winAmount = 0 // Calculate if needed
+                    winAmount = 0
                 }
                 : null,
 
-            overlayScatterData = serverResponse.features?.freeSpins?.overlayScatter != null && serverResponse.features.freeSpins.overlayScatter.isTriggered
-                ? new OverlayScatterData
-                {
-                    isTriggered = true,
-                    count = serverResponse.features.freeSpins.overlayScatter.count,
-                    extraSpins = serverResponse.features.freeSpins.overlayScatter.extraSpins,
-                    positions = serverResponse.features.freeSpins.overlayScatter.positions
-                }
-                : null,
+            overlayScatterData = null,
+            stickyWilds = null,
 
-            stickyWilds = serverResponse.payload.freeSpinState?.stickyWilds,
-
-            // Server-authoritative free spin state
             serverSpinsRemaining = spinsRemaining,
             serverSpinsUsed = spinsUsed,
             serverTotalRoundWin = totalRoundWin,
@@ -580,74 +537,35 @@ public static class InitDataConverter
         return result;
     }
 
-
-    private static List<List<int>> ConvertReelsToMatrix(List<List<string>> serverReels, List<ServerWinLine> winningLines, Dictionary<string, int> stickyWilds, GameConfig gameConfig)
+    private static List<List<int>> ConvertReelsToMatrix(List<List<string>> serverReels, List<List<string>> serverMatrix, List<ServerWaysWin> waysWins, GameConfig gameConfig)
     {
-        // Server sends 4 rows x 5 columns: reels[row][col]
-        // Client needs 5 columns x 4 rows: matrix[col][row]
+        var sourceReels = serverMatrix ?? serverReels;
+        int rowCount = gameConfig != null ? gameConfig.rowCount : 3;
 
-        if (serverReels == null || serverReels.Count != 4)
+        if (sourceReels == null || sourceReels.Count == 0)
         {
-            UnityEngine.Debug.LogError($"Invalid server reels: expected 4 rows, got {serverReels?.Count}");
-            return GenerateDefaultMatrix();
+            UnityEngine.Debug.LogError("Invalid server reels/matrix: sourceReels is null or empty");
+            return GenerateDefaultMatrix(rowCount);
         }
 
-        // Build wild multiplier lookup: [col][row] -> multiplier
-        var wildMultipliers = new Dictionary<string, int>();
-
-        // 1. Add winning line wild details (format explicit col, row)
-        if (winningLines != null)
-        {
-            foreach (var line in winningLines)
-            {
-                if (line.wildDetails != null)
-                {
-                    foreach (var wild in line.wildDetails)
-                    {
-                        string key = $"{wild.col}_{wild.row}";
-                        wildMultipliers[key] = wild.multiplier;
-                    }
-                }
-            }
-        }
-
-        // 2. Add sticky wilds (format row_col) - these override winningLines if they overlap
-        // to ensure the authoritative sticky multiplier is used (e.g. 3x instead of 1x)
-        if (stickyWilds != null)
-        {
-            foreach (var kvp in stickyWilds)
-            {
-                string[] parts = kvp.Key.Split('_');
-                if (parts.Length == 2 &&
-                    int.TryParse(parts[0], out int row) &&
-                    int.TryParse(parts[1], out int col))
-                {
-                    // Convert row_col to col_row for lookup
-                    string key = $"{col}_{row}";
-                    wildMultipliers[key] = kvp.Value;
-                }
-            }
-        }
+        int totalRows = sourceReels.Count;
+        int totalCols = sourceReels[0].Count;
 
         var matrix = new List<List<int>>();
 
-        // Transpose: iterate by columns
-        for (int col = 0; col < 5; col++)
+        for (int col = 0; col < totalCols; col++)
         {
             var column = new List<int>();
-
-            // Each column has 4 rows
-            for (int row = 0; row < 4; row++)
+            for (int row = 0; row < totalRows; row++)
             {
-                if (col >= serverReels[row].Count)
+                if (col >= sourceReels[row].Count)
                 {
                     UnityEngine.Debug.LogError($"Invalid server data at row {row}, col {col}");
                     column.Add(0);
                     continue;
                 }
 
-                string symbolStr = serverReels[row][col];
-
+                string symbolStr = sourceReels[row][col];
                 if (!int.TryParse(symbolStr, out int symbolId))
                 {
                     UnityEngine.Debug.LogError($"Failed to parse symbol: {symbolStr}");
@@ -655,50 +573,21 @@ public static class InitDataConverter
                     continue;
                 }
 
-                // Check if this is a wild with multiplier
-                if (symbolId == gameConfig.wildSymbolId)
-                {
-                    string key = $"{col}_{row}";
-                    if (wildMultipliers.TryGetValue(key, out int multiplier))
-                    {
-                        // Map wild multiplier to correct symbol ID
-                        symbolId = GetWildSymbolIdForMultiplier(multiplier, gameConfig);
-                    }
-                }
-
                 column.Add(symbolId);
             }
-
             matrix.Add(column);
         }
 
         return matrix;
     }
 
-    /// <summary>
-    /// Maps wild multiplier to correct symbol ID
-    /// 1x → 11 (Wild), 2x → 13 (Wild2x), 3x → 14 (Wild3x), 5x → 15 (Wild5x)
-    /// </summary>
-    private static int GetWildSymbolIdForMultiplier(int multiplier, GameConfig gameConfig)
-    {
-        return multiplier switch
-        {
-            1 => 11,  // Wild (normal)
-            2 => 13,  // Wild 2x
-            3 => 14,  // Wild 3x
-            5 => 15,  // Wild 5x
-            _ => 11   // Default to normal wild
-        };
-    }
-
-
-    private static List<List<int>> GenerateDefaultMatrix()
+    private static List<List<int>> GenerateDefaultMatrix(int rowCount)
     {
         var matrix = new List<List<int>>();
         for (int col = 0; col < 5; col++)
         {
             var column = new List<int>();
-            for (int row = 0; row < 4; row++)
+            for (int row = 0; row < rowCount; row++)
             {
                 column.Add(0);
             }
@@ -707,67 +596,30 @@ public static class InitDataConverter
         return matrix;
     }
 
-    /// <summary>
-    /// Converts server winningLines to client winLines.
-    /// Uses the server-provided positions directly: each position is [row, col].
-    /// Encodes as flat index = col * rowCount + row (rowCount = 4).
-    /// </summary>
-    private static List<WinLine> ConvertWinningLines(List<ServerWinLine> serverWinLines, GameConfig gameConfig)
+    private static List<WinLine> ConvertWinningLines(List<ServerWaysWin> serverWaysWins, GameConfig gameConfig)
     {
         var winLines = new List<WinLine>();
+        if (serverWaysWins == null) return winLines;
 
-        if (serverWinLines == null) return winLines;
-
-        foreach (var serverLine in serverWinLines)
+        int index = 0;
+        foreach (var waysWin in serverWaysWins)
         {
-            // Parse symbolId from string to int
-            if (!int.TryParse(serverLine.symbolId, out int symbolId))
-            {
-                UnityEngine.Debug.LogError($"Failed to parse symbolId: {serverLine.symbolId}");
-                continue;
-            }
-
             var flatPositions = new List<int>();
-
-
-
-            if (serverLine.positions != null && serverLine.positions.Count > 0)
+            if (waysWin.matchedPositions != null)
             {
-                foreach (var pos in serverLine.positions)
+                foreach (var pos in waysWin.matchedPositions)
                 {
-                    if (pos.Count >= 2)
-                    {
-                        int row = pos[0];
-                        int col = pos[1];
-                        int flatIndex = row * 5 + col;
-                        flatPositions.Add(flatIndex);
-
-                    }
-                }
-            }
-            else
-            {
-                // Fallback: derive from payline definition + matchCount if positions missing
-                UnityEngine.Debug.LogWarning($"[ConvertWinningLines] No positions from server for lineIndex {serverLine.lineIndex}, falling back to payline table");
-                if (gameConfig?.paylines != null &&
-                    serverLine.lineIndex >= 0 &&
-                    serverLine.lineIndex < gameConfig.paylines.Count)
-                {
-                    var payline = gameConfig.paylines[serverLine.lineIndex];
-                    for (int col = 0; col < serverLine.matchCount && col < payline.Count; col++)
-                    {
-                        int row = payline[col];
-                        flatPositions.Add(row * 5 + col);
-                    }
+                    int flatIndex = pos.row * 5 + pos.col;
+                    flatPositions.Add(flatIndex);
                 }
             }
 
             winLines.Add(new WinLine
             {
-                lineId = serverLine.lineIndex,
-                symbolId = symbolId,
+                lineId = index++,
+                symbolId = waysWin.symbolId,
                 positions = flatPositions,
-                winAmount = serverLine.payout
+                winAmount = waysWin.winInCash
             });
         }
 

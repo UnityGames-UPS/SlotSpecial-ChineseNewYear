@@ -34,9 +34,6 @@ public class GameManager : MonoBehaviour
     internal int freeSpinsUsed;
     internal bool waitingForFreeSpinStart;
 
-    // Buy Feature
-    internal bool isBuyingFeature;        // True while waiting for server response
-
     internal bool isInitialized;
     internal bool initializationFailed;
 
@@ -51,7 +48,6 @@ public class GameManager : MonoBehaviour
         currentState = GameState.Initializing;
         currentSpinSpeed = SpinSpeed.Normal;
         waitingForFreeSpinStart = false;
-        isBuyingFeature = false;
         isInitialized = false;
         initializationFailed = false;
     }
@@ -417,11 +413,14 @@ public class GameManager : MonoBehaviour
 
         if (isAutoPlaying && !isInFreeSpins)
         {
-            autoPlayRemainingRounds--;
+            if (autoPlayTotalRounds != -1)
+            {
+                autoPlayRemainingRounds--;
+            }
 
             uiManager.UpdateAutoPlayCount();
 
-            if (autoPlayRemainingRounds <= 0)
+            if (autoPlayTotalRounds != -1 && autoPlayRemainingRounds <= 0)
             {
                 currentState = GameState.Idle;
                 StopAutoPlay();
@@ -477,86 +476,7 @@ public class GameManager : MonoBehaviour
 
     #endregion
 
-    #region Buy Feature
 
-    internal double GetBuyFeatureCost(int betIndex = -1)
-    {
-        int idx = betIndex < 0 ? currentBetIndex : betIndex;
-        return gameConfig.availableBets[idx] * gameConfig.betMultiplier * gameConfig.buyFeatureCostMultiplier;
-    }
-
-    internal void RequestBuyFeature()
-    {
-        if (currentState != GameState.Idle) return;
-        if (!socketManager.isConnected) return;
-        if (isBuyingFeature) return;
-
-        double cost = GetBuyFeatureCost();
-        if (playerData.balance < cost)
-        {
-            if (popupManager != null)
-            {
-                popupManager.ShowInsufficientFundsError();
-            }
-            return;
-        }
-
-        isBuyingFeature = true;
-        currentState = GameState.Spinning;
-
-        uiManager.OnBuyFeatureConfirmed();
-        socketManager.SendBuyFeatureRequest(currentBetIndex);
-
-        if (slotView != null) slotView.StartSpin();
-
-        if (spinCoroutine != null) StopCoroutine(spinCoroutine);
-        spinCoroutine = StartCoroutine(BuyFeatureRoutine());
-    }
-
-    private IEnumerator BuyFeatureRoutine()
-    {
-        // Wait until the server result arrives (lastResult set by OnSpinResultReceived)
-        while (lastResult == null)
-        {
-            yield return null;
-        }
-
-        isBuyingFeature = false;
-        currentState = GameState.Stopping;
-
-        // Wait for reels to fully land before starting the scatter sequence.
-        // We use a callback flag so we react exactly when StopSpinSequence finishes
-        // rather than relying on a fixed time guess.
-        if (slotView != null && lastResult.resultMatrix != null)
-        {
-            bool reelsStopped = false;
-            slotView.QuickStop(lastResult.resultMatrix, () => reelsStopped = true);
-            while (!reelsStopped)
-            {
-                yield return null;
-            }
-        }
-      // Update balance display from server result immediately.
-        // BuyFeature always has totalWin=0, so OnWinAnimationComplete's multiplier
-        // guard (>= 5) would skip OnSpinStopping entirely — call it explicitly here.
-        uiManager.OnSpinStopping(lastResult);
-        // --- Scatter sound + animation sequence ---
-        // Only play if scatter symbols are actually present in the result matrix.
-        if (ResultMatrixHasScatter(lastResult.resultMatrix))
-        {
-            AudioManager.Instance?.Play3ScatterHit();
-            if (slotView != null) slotView.AnimateAllScatters(4);
-            yield return new WaitForSeconds(3.5f);
-        }
-        // -----------------------------------------
-
-  
-
-        // No win lines for a buy-feature trigger — go straight to result processing
-        OnWinAnimationComplete();
-    }
-
-    #endregion
 
     #region Auto Play
 

@@ -45,12 +45,8 @@ public class AudioManager : MonoBehaviour
     [Header("Bet Sounds")]
     [SerializeField] private AudioClip clipBetPlus;
     [SerializeField] private AudioClip clipBetMinus;
-    [SerializeField] private AudioClip clipMaxBet;
 
-    [Header("Buy Free Spin Sounds")]
-    [SerializeField] private AudioClip clipBuyFreeSpinOpen;
-    [SerializeField] private AudioClip clipBuyConfirmClose;
-    [SerializeField] private AudioClip clipBuyBetPlusMinus;
+
 
     [Header("Spin Sounds")]
     [SerializeField] private AudioClip clipSpinStart;
@@ -204,29 +200,9 @@ public class AudioManager : MonoBehaviour
         PlayOneShot(uiSource, clipBetMinus);
     }
 
-    internal void PlayMaxBet()
-    {
-        if (!_sfxEnabled) return;
-        PlayOneShot(uiSource, clipMaxBet);
-    }
 
-    internal void PlayBuyFreeSpinOpen()
-    {
-        if (!_sfxEnabled) return;
-        PlayOneShot(uiSource, clipBuyFreeSpinOpen);
-    }
 
-    internal void PlayBuyConfirmClose()
-    {
-        if (!_sfxEnabled) return;
-        PlayOneShot(uiSource, clipBuyConfirmClose);
-    }
 
-    internal void PlayBuyBetPlusMinus()
-    {
-        if (!_sfxEnabled) return;
-        PlayOneShot(uiSource, clipBuyBetPlusMinus);
-    }
 
 
 

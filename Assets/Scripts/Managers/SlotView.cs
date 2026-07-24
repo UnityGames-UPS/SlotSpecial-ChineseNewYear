@@ -11,44 +11,38 @@ public class SlotView : MonoBehaviour
 
     [Header("Symbol Sprites - Assign by Name")]
     [Tooltip("Symbol sprites assigned by name. Array order: Sheriff, CowboyBlue, CowgirlGreen, CowgirlRed, Treasure, Gun, A, K, Q, J, Ten, Wild, Scatter, Wild2x, Wild3x, Wild5x")]
-    [SerializeField] private Sprite spriteSheriff;           // ID: 0
-    [SerializeField] private Sprite spriteCowboyBlue;        // ID: 1
-    [SerializeField] private Sprite spriteCowgirlGreen;      // ID: 2
-    [SerializeField] private Sprite spriteCowgirlRed;        // ID: 3
-    [SerializeField] private Sprite spriteTreasure;          // ID: 4
-    [SerializeField] private Sprite spriteGun;               // ID: 5
-    [SerializeField] private Sprite spriteA;                 // ID: 6
-    [SerializeField] private Sprite spriteK;                 // ID: 7
-    [SerializeField] private Sprite spriteQ;                 // ID: 8
-    [SerializeField] private Sprite spriteJ;                 // ID: 9
-    [SerializeField] private Sprite spriteTen;               // ID: 10
-    [SerializeField] private Sprite spriteWild;              // ID: 11 (1x multiplier)
-    [SerializeField] private Sprite spriteScatter;           // ID: 12
-    [SerializeField] private Sprite spriteWild2x;            // ID: 13 (2x multiplier)
-    [SerializeField] private Sprite spriteWild3x;            // ID: 14 (3x multiplier)
-    [SerializeField] private Sprite spriteWild5x;            // ID: 15 (5x multiplier)
+    [SerializeField] private Sprite spriteLantern;           // ID: 0
+    [SerializeField] private Sprite spriteHammer;            // ID: 1
+    [SerializeField] private Sprite spriteMoneyPouch;         // ID: 2
+    [SerializeField] private Sprite spriteCoin;              // ID: 3
+    [SerializeField] private Sprite spriteA;                 // ID: 4
+    [SerializeField] private Sprite spriteK;                 // ID: 5
+    [SerializeField] private Sprite spriteQ;                 // ID: 6
+    [SerializeField] private Sprite spriteJ;                 // ID: 7
+    [SerializeField] private Sprite spriteTen;               // ID: 8
+    [SerializeField] private Sprite spriteNine;              // ID: 9
+    [SerializeField] private Sprite spriteWild;              // ID: 10
+    [SerializeField] private Sprite spriteUSpin;             // ID: 11
+    [SerializeField] private Sprite spriteMoneyBag;          // ID: 12
 
     // Internal array built from named sprites
     private Sprite[] symbolSprites;
 
     [Header("Win Animation Sprite Arrays - One per Symbol ID")]
-    [Tooltip("Animation sprite arrays for each symbol. Array index = symbol ID (0-15)")]
-    [SerializeField] private List<Sprite> animSpritesSheriff;        // ID: 0
-    [SerializeField] private List<Sprite> animSpritesCowboyBlue;     // ID: 1
-    [SerializeField] private List<Sprite> animSpritesCowgirlGreen;   // ID: 2
-    [SerializeField] private List<Sprite> animSpritesCowgirlRed;     // ID: 3
-    [SerializeField] private List<Sprite> animSpritesTreasure;       // ID: 4
-    [SerializeField] private List<Sprite> animSpritesGun;            // ID: 5
-    [SerializeField] private List<Sprite> animSpritesA;              // ID: 6
-    [SerializeField] private List<Sprite> animSpritesK;              // ID: 7
-    [SerializeField] private List<Sprite> animSpritesQ;              // ID: 8
-    [SerializeField] private List<Sprite> animSpritesJ;              // ID: 9
-    [SerializeField] private List<Sprite> animSpritesTen;            // ID: 10
-    [SerializeField] private List<Sprite> animSpritesWild;           // ID: 11
-    [SerializeField] private List<Sprite> animSpritesScatter;        // ID: 12
-    [SerializeField] private List<Sprite> animSpritesWild2x;         // ID: 13
-    [SerializeField] private List<Sprite> animSpritesWild3x;         // ID: 14
-    [SerializeField] private List<Sprite> animSpritesWild5x;         // ID: 15
+    [Tooltip("Animation sprite arrays for each symbol. Array index = symbol ID (0-12)")]
+    [SerializeField] private List<Sprite> animSpritesLantern;        // ID: 0
+    [SerializeField] private List<Sprite> animSpritesHammer;         // ID: 1
+    [SerializeField] private List<Sprite> animSpritesMoneyPouch;      // ID: 2
+    [SerializeField] private List<Sprite> animSpritesCoin;            // ID: 3
+    [SerializeField] private List<Sprite> animSpritesA;               // ID: 4
+    [SerializeField] private List<Sprite> animSpritesK;               // ID: 5
+    [SerializeField] private List<Sprite> animSpritesQ;               // ID: 6
+    [SerializeField] private List<Sprite> animSpritesJ;               // ID: 7
+    [SerializeField] private List<Sprite> animSpritesTen;             // ID: 8
+    [SerializeField] private List<Sprite> animSpritesNine;            // ID: 9
+    [SerializeField] private List<Sprite> animSpritesWild;            // ID: 10
+    [SerializeField] private List<Sprite> animSpritesUSpin;           // ID: 11
+    [SerializeField] private List<Sprite> animSpritesMoneyBag;        // ID: 12
 
     // Internal array of animation sprite lists
     private List<Sprite>[] animationSpriteArrays;
@@ -179,23 +173,20 @@ public class SlotView : MonoBehaviour
     private void BuildSymbolSpriteArray()
     {
         // Build the symbol sprite array from named sprite fields
-        symbolSprites = new Sprite[16];
-        symbolSprites[0] = spriteSheriff;
-        symbolSprites[1] = spriteCowboyBlue;
-        symbolSprites[2] = spriteCowgirlGreen;
-        symbolSprites[3] = spriteCowgirlRed;
-        symbolSprites[4] = spriteTreasure;
-        symbolSprites[5] = spriteGun;
-        symbolSprites[6] = spriteA;
-        symbolSprites[7] = spriteK;
-        symbolSprites[8] = spriteQ;
-        symbolSprites[9] = spriteJ;
-        symbolSprites[10] = spriteTen;
-        symbolSprites[11] = spriteWild;
-        symbolSprites[12] = spriteScatter;
-        symbolSprites[13] = spriteWild2x;
-        symbolSprites[14] = spriteWild3x;
-        symbolSprites[15] = spriteWild5x;
+        symbolSprites = new Sprite[13];
+        symbolSprites[0] = spriteLantern;
+        symbolSprites[1] = spriteHammer;
+        symbolSprites[2] = spriteMoneyPouch;
+        symbolSprites[3] = spriteCoin;
+        symbolSprites[4] = spriteA;
+        symbolSprites[5] = spriteK;
+        symbolSprites[6] = spriteQ;
+        symbolSprites[7] = spriteJ;
+        symbolSprites[8] = spriteTen;
+        symbolSprites[9] = spriteNine;
+        symbolSprites[10] = spriteWild;
+        symbolSprites[11] = spriteUSpin;
+        symbolSprites[12] = spriteMoneyBag;
 
         // Validate
         for (int i = 0; i < symbolSprites.Length; i++)
@@ -207,23 +198,20 @@ public class SlotView : MonoBehaviour
         }
 
         // Build the animation sprite arrays
-        animationSpriteArrays = new List<Sprite>[16];
-        animationSpriteArrays[0] = animSpritesSheriff;
-        animationSpriteArrays[1] = animSpritesCowboyBlue;
-        animationSpriteArrays[2] = animSpritesCowgirlGreen;
-        animationSpriteArrays[3] = animSpritesCowgirlRed;
-        animationSpriteArrays[4] = animSpritesTreasure;
-        animationSpriteArrays[5] = animSpritesGun;
-        animationSpriteArrays[6] = animSpritesA;
-        animationSpriteArrays[7] = animSpritesK;
-        animationSpriteArrays[8] = animSpritesQ;
-        animationSpriteArrays[9] = animSpritesJ;
-        animationSpriteArrays[10] = animSpritesTen;
-        animationSpriteArrays[11] = animSpritesWild;
-        animationSpriteArrays[12] = animSpritesScatter;
-        animationSpriteArrays[13] = animSpritesWild2x;
-        animationSpriteArrays[14] = animSpritesWild3x;
-        animationSpriteArrays[15] = animSpritesWild5x;
+        animationSpriteArrays = new List<Sprite>[13];
+        animationSpriteArrays[0] = animSpritesLantern;
+        animationSpriteArrays[1] = animSpritesHammer;
+        animationSpriteArrays[2] = animSpritesMoneyPouch;
+        animationSpriteArrays[3] = animSpritesCoin;
+        animationSpriteArrays[4] = animSpritesA;
+        animationSpriteArrays[5] = animSpritesK;
+        animationSpriteArrays[6] = animSpritesQ;
+        animationSpriteArrays[7] = animSpritesJ;
+        animationSpriteArrays[8] = animSpritesTen;
+        animationSpriteArrays[9] = animSpritesNine;
+        animationSpriteArrays[10] = animSpritesWild;
+        animationSpriteArrays[11] = animSpritesUSpin;
+        animationSpriteArrays[12] = animSpritesMoneyBag;
 
         // Validate animation arrays
         for (int i = 0; i < animationSpriteArrays.Length; i++)
@@ -233,19 +221,24 @@ public class SlotView : MonoBehaviour
                 Debug.LogWarning($"[SlotView] Animation sprite array at index {i} is not assigned or empty!");
             }
         }
-
     }
 
     private void InitializeReels()
     {
         cycleDistance = symbolHeight;
-
         middlePosition = 0f;
+
+        int rowCount = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
 
         currentDisplayMatrix = new List<List<int>>();
         for (int col = 0; col < 5; col++)
         {
-            currentDisplayMatrix.Add(new List<int> { 0, 0, 0, 0 });
+            var defaultCol = new List<int>();
+            for (int r = 0; r < rowCount; r++)
+            {
+                defaultCol.Add(0);
+            }
+            currentDisplayMatrix.Add(defaultCol);
             reelCycleCount.Add(0);
         }
     }
@@ -254,9 +247,11 @@ public class SlotView : MonoBehaviour
     {
         if (matrix == null || matrix.Count != 5) return;
 
+        int rowCount = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
+
         for (int col = 0; col < 5; col++)
         {
-            if (matrix[col].Count != 4) return;
+            if (matrix[col].Count != rowCount) return;
         }
 
         currentDisplayMatrix = matrix;
@@ -279,9 +274,11 @@ public class SlotView : MonoBehaviour
             return;
         }
 
-        if (visibleSymbolIds == null || visibleSymbolIds.Count != 4)
+        int rowCount = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
+
+        if (visibleSymbolIds == null || visibleSymbolIds.Count != rowCount)
         {
-            Debug.LogError($"SetReelSymbols: Invalid visibleSymbolIds count {visibleSymbolIds?.Count}, expected 4");
+            Debug.LogError($"SetReelSymbols: Invalid visibleSymbolIds count {visibleSymbolIds?.Count}, expected {rowCount}");
             return;
         }
 
@@ -293,21 +290,25 @@ public class SlotView : MonoBehaviour
             return;
         }
 
-        for (int row = 0; row < 4; row++)
+        int visibleStartIndex = 6;
+        for (int row = 0; row < rowCount; row++)
         {
-            int imageIndex = 6 + row;
-            int symbolId = visibleSymbolIds[row];
-            reel.images[imageIndex].sprite = GetSymbolSprite(symbolId);
+            int imageIndex = visibleStartIndex + row;
+            if (imageIndex < reel.images.Count)
+            {
+                int symbolId = visibleSymbolIds[row];
+                reel.images[imageIndex].sprite = GetSymbolSprite(symbolId);
+            }
         }
 
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < visibleStartIndex; i++)
         {
-            reel.images[i].sprite = GetSymbolSprite(Random.Range(0, 11));
+            reel.images[i].sprite = GetSymbolSprite(Random.Range(0, 10));
         }
 
-        for (int i = 10; i < 16; i++)
+        for (int i = visibleStartIndex + rowCount; i < reel.images.Count; i++)
         {
-            reel.images[i].sprite = GetSymbolSprite(Random.Range(0, 11));
+            reel.images[i].sprite = GetSymbolSprite(Random.Range(0, 10));
         }
 
         if (isInitial && reelTransforms[columnIndex] != null)
@@ -322,7 +323,7 @@ public class SlotView : MonoBehaviour
 
     private Sprite GetSymbolSprite(int symbolId)
     {
-        // Validate symbolId range (0-15)
+        // Validate symbolId range (0-12)
         if (symbolId < 0 || symbolId >= symbolSprites.Length)
         {
             Debug.LogWarning($"[SlotView] Invalid symbolId {symbolId}, using default sprite 0. Total sprites: {symbolSprites.Length}");
@@ -650,10 +651,11 @@ public class SlotView : MonoBehaviour
                 : scatterSymbolId;
             bool hasScatter = false;
             bool hasWild    = false;
+            int wildId = gameManager?.gameConfig != null ? gameManager.gameConfig.wildSymbolId : 10;
             foreach (int sym in currentDisplayMatrix[columnIndex])
             {
-                if (sym == actualScatterId)                              hasScatter = true;
-                if (sym == 11 || sym == 13 || sym == 14 || sym == 15) hasWild    = true;
+                if (sym == actualScatterId || sym == 12) hasScatter = true;
+                if (sym == wildId)                       hasWild    = true;
             }
             if (hasScatter) AudioManager.Instance?.PlayScatterHit();
             else if (hasWild) AudioManager.Instance?.PlayWildHit();
@@ -739,9 +741,6 @@ public class SlotView : MonoBehaviour
 
     #endregion
 
-
-
-
     #region Stop Symbol Animations
 
     private void PlayStopAnimationsForColumn(int col)
@@ -753,8 +752,9 @@ public class SlotView : MonoBehaviour
         for (int row = 0; row < currentDisplayMatrix[col].Count; row++)
         {
             int symId = currentDisplayMatrix[col][row];
-            bool isScatter = (symId == actualScatterId);
-            bool isWild = (symId == 11 || symId == 13 || symId == 14 || symId == 15);
+            bool isScatter = (symId == actualScatterId || symId == 12);
+            int wildId = gameManager?.gameConfig != null ? gameManager.gameConfig.wildSymbolId : 10;
+            bool isWild = (symId == wildId);
             
             if (isScatter || isWild)
             {
@@ -920,8 +920,8 @@ public class SlotView : MonoBehaviour
                 int row = flatIndex / 5;
                 int col = flatIndex % 5;
 
-
-                if (col < 0 || col >= 5 || row < 0 || row >= 4)
+                int rowLimit = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
+                if (col < 0 || col >= 5 || row < 0 || row >= rowLimit)
                 {
                     Debug.LogWarning($"[PlayWinLinesSequentially] Invalid position! col: {col}, row: {row}");
                     continue;
@@ -1329,14 +1329,7 @@ public class SlotView : MonoBehaviour
     /// </summary>
     private int GetWildSpriteIdForMultiplier(int multiplier)
     {
-        return multiplier switch
-        {
-            1 => 11,
-            2 => 13,
-            3 => 14,
-            5 => 15,
-            _ => 11
-        };
+        return 10;
     }
 
     /// <summary>

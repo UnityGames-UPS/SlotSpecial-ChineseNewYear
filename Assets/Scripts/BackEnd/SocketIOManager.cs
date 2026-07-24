@@ -11,7 +11,6 @@ public class SocketIOManager : MonoBehaviour
     [SerializeField] private string testToken = "test-token";
     protected string testSocketURL = "https://devrealtime.dingdinghouse.com/";
     protected string nameSpace = "playground";
-    protected string gameID = "SL-WW";
 
 
     [Header("References")]
@@ -21,7 +20,6 @@ public class SocketIOManager : MonoBehaviour
     [SerializeField] private PopupManager popupManager;
     [SerializeField] internal JSFunctCalls JSManager;
     [SerializeField] private GameObject RaycastBlocker;
-    [SerializeField] private HistoryController historyController;
 
     private SocketManager socketManager;
     private Socket gameSocket;
@@ -124,7 +122,6 @@ public class SocketIOManager : MonoBehaviour
         gameSocket.On<string>("result", OnResultReceived);
         gameSocket.On<string>("pong", OnPongReceived);
         gameSocket.On<string>("AnotherDevice", OnAnotherDevice);
-        gameSocket.On<string>("result", OnHistoryResultReceived); // For bet history responses
 
         socketManager.Open();
     }
@@ -220,7 +217,7 @@ public class SocketIOManager : MonoBehaviour
             var initData = JsonConvert.DeserializeObject<InitData>(jsonData);
             var gameConfig = InitDataConverter.ConvertToGameConfig(initData);
             var playerData = InitDataConverter.ConvertToPlayerData(initData.player);
-            var initialMatrix = GenerateRandomMatrix();
+            var initialMatrix = GenerateRandomMatrix(gameConfig.rowCount);
 
             isInitialized = true;
 
@@ -402,73 +399,9 @@ public class SocketIOManager : MonoBehaviour
         gameSocket.Emit("request", json);
     }
 
-    internal void SendBuyFeatureRequest(int betIndex)
-    {
-        Debug.Log($"[SocketIO] BuyFeature request: betIndex={betIndex}");
-
-        var request = new BuyFeatureRequest
-        {
-            type = "BUY_FEATURE",
-            payload = new BuyFeaturePayload
-            {
-                betIndex = betIndex
-            }
-        };
-
-        string json = JsonUtility.ToJson(request);
-        gameSocket.Emit("request", json);
-    }
 
     #endregion
 
-    #region Bet History
-
-    internal void SendBetHistoryRequest(int page)
-    {
-        Debug.Log($"[SocketIO] BetHistory request: page={page}");
-
-        var request = new BetHistoryRequest
-        {
-            type = "BET_HISTORY",
-            payload = new BetHistoryPayload
-            {
-                page = page,
-            }
-        };
-
-        string json = JsonUtility.ToJson(request);
-        gameSocket.Emit("request", json);
-    }
-
-    private void OnHistoryResultReceived(string jsonData)
-    {
-        if (!jsonData.Contains("\"id\":\"BetHistory\""))
-        {
-            return;
-        }
-
-        Debug.Log($"[SocketIO] BetHistory received: {jsonData}");
-
-        try
-        {
-            var historyResponse = JsonConvert.DeserializeObject<BetHistoryResponse>(jsonData);
-
-            if (historyController != null)
-            {
-                historyController.OnHistoryDataReceived(historyResponse);
-            }
-            else
-            {
-                Debug.LogWarning("[SocketIO] HistoryController not assigned");
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[SocketIO] BetHistory parse failed: {e.Message}");
-        }
-    }
-
-    #endregion
 
 
     #region Cleanup
@@ -517,15 +450,15 @@ public class SocketIOManager : MonoBehaviour
     }
 
     #endregion
-    private List<List<int>> GenerateRandomMatrix()
+    private List<List<int>> GenerateRandomMatrix(int rowCount)
     {
         var matrix = new List<List<int>>();
         for (int col = 0; col < 5; col++)
         {
             var column = new List<int>();
-            for (int row = 0; row < 4; row++)
+            for (int row = 0; row < rowCount; row++)
             {
-                column.Add(UnityEngine.Random.Range(0, 11));
+                column.Add(UnityEngine.Random.Range(0, 10));
             }
             matrix.Add(column);
         }
