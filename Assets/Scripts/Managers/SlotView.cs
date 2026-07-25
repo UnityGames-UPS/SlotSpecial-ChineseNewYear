@@ -10,7 +10,6 @@ public class SlotView : MonoBehaviour
     [SerializeField] private GameManager gameManager;
 
     [Header("Symbol Sprites - Assign by Name")]
-    [Tooltip("Symbol sprites assigned by name. Array order: Sheriff, CowboyBlue, CowgirlGreen, CowgirlRed, Treasure, Gun, A, K, Q, J, Ten, Wild, Scatter, Wild2x, Wild3x, Wild5x")]
     [SerializeField] private Sprite spriteLantern;           // ID: 0
     [SerializeField] private Sprite spriteHammer;            // ID: 1
     [SerializeField] private Sprite spriteMoneyPouch;         // ID: 2
@@ -28,21 +27,9 @@ public class SlotView : MonoBehaviour
     // Internal array built from named sprites
     private Sprite[] symbolSprites;
 
-    [Header("Win Animation Sprite Arrays - One per Symbol ID")]
-    [Tooltip("Animation sprite arrays for each symbol. Array index = symbol ID (0-12)")]
-    [SerializeField] private List<Sprite> animSpritesLantern;        // ID: 0
-    [SerializeField] private List<Sprite> animSpritesHammer;         // ID: 1
-    [SerializeField] private List<Sprite> animSpritesMoneyPouch;      // ID: 2
-    [SerializeField] private List<Sprite> animSpritesCoin;            // ID: 3
-    [SerializeField] private List<Sprite> animSpritesA;               // ID: 4
-    [SerializeField] private List<Sprite> animSpritesK;               // ID: 5
-    [SerializeField] private List<Sprite> animSpritesQ;               // ID: 6
-    [SerializeField] private List<Sprite> animSpritesJ;               // ID: 7
-    [SerializeField] private List<Sprite> animSpritesTen;             // ID: 8
-    [SerializeField] private List<Sprite> animSpritesNine;            // ID: 9
-    [SerializeField] private List<Sprite> animSpritesWild;            // ID: 10
+    [Header("Win Animation Sprite Arrays")]
+    [Tooltip("Animation sprite arrays for symbols. USpin = ID 11")]
     [SerializeField] private List<Sprite> animSpritesUSpin;           // ID: 11
-    [SerializeField] private List<Sprite> animSpritesMoneyBag;        // ID: 12
 
     // Internal array of animation sprite lists
     private List<Sprite>[] animationSpriteArrays;
@@ -50,18 +37,18 @@ public class SlotView : MonoBehaviour
     [Header("Reel Containers")]
     [SerializeField] private Transform[] reelTransforms;
 
-    [Header("Reel Images - 16 images per reel")]
+    [Header("Reel Images - 7 images per reel")]
     [SerializeField] private List<ReelImages> reelImagesList;
 
     [Header("Spin Settings")]
     [SerializeField] private float symbolHeight = 100f;
-    [SerializeField] private float spinSpeed = 0.05f;
+    [SerializeField] private float spinSpeed = 2000f;
     [SerializeField] private float reelStartStagger = 0.08f;
     [SerializeField] private float reelStopStagger = 0.12f;
 
     [Header("Animation Settings - Casino Style")]
-    [SerializeField] private float anticipationUpDistance = 30f;
-    [SerializeField] private float anticipationUpDuration = 0.15f;
+    [SerializeField] private float anticipationUpDistance = 20f;
+    [SerializeField] private float anticipationUpDuration = 0.12f;
     [SerializeField] private float dropDownDistance = 15f;
     [SerializeField] private float dropDownDuration = 0.12f;
     [SerializeField] private float settleBounceDuration = 0.18f;
@@ -73,10 +60,10 @@ public class SlotView : MonoBehaviour
 
     [Header("Stop Animation Settings")]
     [SerializeField] private float stopOvershootDistance = 50f;
-    [SerializeField] private float stopOvershootDuration = 0.15f;
+    [SerializeField] private float stopOvershootDuration = 0.20f;
     [SerializeField] private float stopBounceBackDistance = 15f;
     [SerializeField] private float stopBounceBackDuration = 0.25f;
-    [SerializeField] private float stopSettleDuration = 0.35f;
+    [SerializeField] private float stopSettleDuration = 0.30f;
 
     [Header("Quick Spin Settings")]
     [SerializeField] private float quickStopStagger = 0.06f;
@@ -96,23 +83,12 @@ public class SlotView : MonoBehaviour
     [Tooltip("Delay between enabling winBox overlay and starting the ImageAnimation - for sync timing")]
     [SerializeField] private float winLineBoxToAnimationDelay = 0.05f;
 
-    [Header("Win Box Overlays — Col 0..4  (each has 4 rows: 0=top .. 3=bottom)")]
+    [Header("Win Box Overlays — Col 0..4  (each has 3 rows: 0=top .. 2=bottom)")]
     [SerializeField] private ColumnOverlays[] winBoxColumns = new ColumnOverlays[5];
 
-    [Header("Win Animation Objects — Col 0..4  (each has 4 rows, contains ImageAnimation component)")]
+    [Header("Win Animation Objects — Col 0..4  (each has 3 rows, contains ImageAnimation component)")]
     [Tooltip("GameObject references for win animations. Each should have an ImageAnimation component attached.")]
     [SerializeField] private ColumnOverlays[] winAnimationColumns = new ColumnOverlays[5];
-
-    [Header("Scatter / Badge Overlays — Col 0..4  (each has 4 rows)")]
-    [SerializeField] private ColumnOverlays[] scatterStarColumns = new ColumnOverlays[5];
-
-    [Header("Sticky Wild Overlays — Col 0..4  (each has 4 rows)")]
-    [SerializeField] private ColumnOverlays[] stickyWildColumns = new ColumnOverlays[5];
-
-    [Header("Spin Mask System")]
-    [SerializeField] private Image reelMask;
-    [Tooltip("Non-display slot icon GameObjects per reel (indices 0-5 and 10-15)")]
-    [SerializeField] private List<ReelNonDisplayIcons> reelNonDisplayIconsList;
 
     [SerializeField] private GameObject anticipationFrame;
 
@@ -132,9 +108,6 @@ public class SlotView : MonoBehaviour
     private bool isSpinning;
     private bool scatterAnticipationActive = false;
 
-    // Sticky wild state persisted across spins during free spins
-    private Dictionary<string, int> currentStickyWilds;
-
     #region Initialization
 
     private void Start()
@@ -148,13 +121,7 @@ public class SlotView : MonoBehaviour
     {
         DisableColumns(winBoxColumns);
         DisableColumns(winAnimationColumns);
-        DisableColumns(scatterStarColumns);
-        DisableColumns(stickyWildColumns);
         if (anticipationFrame) anticipationFrame.SetActive(false);
-        
-        // Initialize masks as disabled and non-display icons as hidden
-        DisableAllMasks();
-        DisableAllNonDisplayIcons();
     }
 
     private static void DisableColumns(ColumnOverlays[] cols)
@@ -199,28 +166,8 @@ public class SlotView : MonoBehaviour
 
         // Build the animation sprite arrays
         animationSpriteArrays = new List<Sprite>[13];
-        animationSpriteArrays[0] = animSpritesLantern;
-        animationSpriteArrays[1] = animSpritesHammer;
-        animationSpriteArrays[2] = animSpritesMoneyPouch;
-        animationSpriteArrays[3] = animSpritesCoin;
-        animationSpriteArrays[4] = animSpritesA;
-        animationSpriteArrays[5] = animSpritesK;
-        animationSpriteArrays[6] = animSpritesQ;
-        animationSpriteArrays[7] = animSpritesJ;
-        animationSpriteArrays[8] = animSpritesTen;
-        animationSpriteArrays[9] = animSpritesNine;
-        animationSpriteArrays[10] = animSpritesWild;
+        // Only USpin has an animation in this game
         animationSpriteArrays[11] = animSpritesUSpin;
-        animationSpriteArrays[12] = animSpritesMoneyBag;
-
-        // Validate animation arrays
-        for (int i = 0; i < animationSpriteArrays.Length; i++)
-        {
-            if (animationSpriteArrays[i] == null || animationSpriteArrays[i].Count == 0)
-            {
-                Debug.LogWarning($"[SlotView] Animation sprite array at index {i} is not assigned or empty!");
-            }
-        }
     }
 
     private void InitializeReels()
@@ -284,13 +231,13 @@ public class SlotView : MonoBehaviour
 
         var reel = reelImagesList[columnIndex];
 
-        if (reel.images == null || reel.images.Count != 16)
+        if (reel.images == null || reel.images.Count != 7)
         {
-            Debug.LogError($"SetReelSymbols: Reel {columnIndex} has invalid image count {reel.images?.Count}, expected 16");
+            Debug.LogError($"SetReelSymbols: Reel {columnIndex} has invalid image count {reel.images?.Count}, expected 7");
             return;
         }
 
-        int visibleStartIndex = 6;
+        int visibleStartIndex = 2;
         for (int row = 0; row < rowCount; row++)
         {
             int imageIndex = visibleStartIndex + row;
@@ -352,16 +299,6 @@ public class SlotView : MonoBehaviour
         KillAllTweens();
 
         DisableAllOverlays();
-
-        // Re-enable sticky wilds so they stay visible during the spin
-        if (currentStickyWilds != null && currentStickyWilds.Count > 0)
-        {
-            ApplyStickyWilds(currentStickyWilds);
-        }
-
-        // Enable masks and enable non-display icons when spinning starts
-        EnableAllMasks();
-        EnableAllNonDisplayIcons();
 
         for (int i = 0; i < reelCycleCount.Count; i++)
         {
@@ -432,10 +369,12 @@ public class SlotView : MonoBehaviour
             currentSpeed = spinSpeed / anticipationSpeedMultiplier;
         }
 
+        float cycleDuration = symbolHeight / currentSpeed;
+
         Sequence cycleSequence = DOTween.Sequence();
 
         cycleSequence.Append(
-            slotTransform.DOLocalMoveY(middlePosition - cycleDistance, currentSpeed)
+            slotTransform.DOLocalMoveY(middlePosition - symbolHeight, cycleDuration)
                 .SetEase(Ease.Linear)
         );
 
@@ -443,8 +382,6 @@ public class SlotView : MonoBehaviour
             if (isSpinning)
             {
                 CycleReelSymbols(columnIndex);
-
-                slotTransform.localPosition = new Vector3(slotTransform.localPosition.x, middlePosition, 0);
 
                 if (columnIndex < reelCycleCount.Count)
                 {
@@ -466,16 +403,14 @@ public class SlotView : MonoBehaviour
     private void CycleReelSymbols(int columnIndex)
     {
         var reel = reelImagesList[columnIndex];
-        if (reel.images == null || reel.images.Count != 16) return;
+        if (reel.images == null || reel.images.Count != 7) return;
 
-        Sprite bottomSprite = reel.images[15].sprite;
-
-        for (int i = 15; i > 0; i--)
+        for (int i = 6; i > 0; i--)
         {
             reel.images[i].sprite = reel.images[i - 1].sprite;
         }
 
-        reel.images[0].sprite = GetSymbolSprite(Random.Range(0, 16));
+        reel.images[0].sprite = GetSymbolSprite(Random.Range(0, 10));
     }
 
     #endregion
@@ -491,11 +426,6 @@ public class SlotView : MonoBehaviour
             {
                 SetReelSymbols(col, resultMatrix[col], false);
             }
-            
-            // Ensure masks are disabled and non-display icons are hidden
-            DisableAllMasks();
-            DisableAllNonDisplayIcons();
-            
             onComplete?.Invoke();
             return;
         }
@@ -506,25 +436,6 @@ public class SlotView : MonoBehaviour
     private IEnumerator StopSpinSequence(List<List<int>> resultMatrix, System.Action onComplete, bool isQuickStop)
     {
         currentDisplayMatrix = resultMatrix;
-
-        var currentResult = gameManager.lastResult;
-        if (currentResult != null)
-        {
-            // Overlay scatter badges early so they appear while spinning
-            if (currentResult.overlayScatterData != null && currentResult.overlayScatterData.isTriggered)
-            {
-                foreach (var pos in currentResult.overlayScatterData.positions)
-                {
-                    if (pos.Count >= 2)
-                    {
-                        int row = pos[0];
-                        int col = pos[1];
-                        var go = WinBox(scatterStarColumns, col, row);
-                        if (go) go.SetActive(true);
-                    }
-                }
-            }
-        }
 
         int actualScatterId = gameManager.gameConfig != null ? gameManager.gameConfig.scatterSymbolId : scatterSymbolId;
         int scatterCount = 0;
@@ -593,22 +504,6 @@ public class SlotView : MonoBehaviour
         isSpinning = false;
         scatterAnticipationActive = false;
         if (anticipationFrame) anticipationFrame.SetActive(false);
-
-        // Disable masks and hide non-display icons when spinning stops
-        DisableAllMasks();
-        DisableAllNonDisplayIcons();
-
-        if (currentResult != null)
-        {
-            // Sticky wilds — store state for next spin (overlays only shown during spinning)
-            if (currentResult.stickyWilds != null)
-            {
-                currentStickyWilds = currentResult.stickyWilds;
-                // Don't apply overlays here — they only show during spinning.
-                // The reel symbols already display the correct wild sprite after stopping.
-                DisableColumns(stickyWildColumns);
-            }
-        }
 
         onComplete?.Invoke();
     }
@@ -728,10 +623,6 @@ public class SlotView : MonoBehaviour
                 }
             }
             
-            // Ensure masks are disabled and non-display icons are hidden
-            DisableAllMasks();
-            DisableAllNonDisplayIcons();
-
             onComplete?.Invoke();
             return;
         }
@@ -789,9 +680,9 @@ public class SlotView : MonoBehaviour
         if (column >= reelImagesList.Count) return;
 
         var reel = reelImagesList[column];
-        if (reel.images == null || reel.images.Count < 10) return;
+        if (reel.images == null || reel.images.Count != 7) return;
 
-        int imageIndex = 6 + row;
+        int imageIndex = 2 + row;
         if (imageIndex >= reel.images.Count) return;
 
         Image symbolImage = reel.images[imageIndex];
@@ -888,9 +779,8 @@ public class SlotView : MonoBehaviour
 
     private IEnumerator PlayWinLinesSequentially(List<WinLine> winLines, System.Action onComplete)
     {
-        bool skipScreen = gameManager != null && gameManager.uiManager != null && gameManager.uiManager.skipScreenToggle != null && gameManager.uiManager.skipScreenToggle.isOn;
         int loopCount = (gameManager != null && (gameManager.isInFreeSpins || gameManager.isAutoPlaying)) ? 1 : winSymbolLoopCount;
-        float lineDuration = skipScreen ? 0.5f : winSymbolLoopDuration * loopCount;
+        float lineDuration = winSymbolLoopDuration * loopCount;
 
         List<int> prevPositions = null;
 
@@ -966,7 +856,7 @@ public class SlotView : MonoBehaviour
         if (col >= reelImagesList.Count) return;
         var reel = reelImagesList[col];
         if (reel.images == null) return;
-        int imageIndex = 6 + row;
+        int imageIndex = 2 + row;
         if (imageIndex >= reel.images.Count) return;
         if (reel.images[imageIndex] != null)
         {
@@ -1002,13 +892,13 @@ public class SlotView : MonoBehaviour
         }
 
         var reel = reelImagesList[column];
-        if (reel.images == null || reel.images.Count < 10)
+        if (reel.images == null || reel.images.Count != 7)
         {
             Debug.LogError($"[AnimateWinSymbol] Reel {column} has invalid images list");
             return;
         }
 
-        int imageIndex = 6 + row;
+        int imageIndex = 2 + row;
         if (imageIndex >= reel.images.Count)
         {
             Debug.LogError($"[AnimateWinSymbol] Image index {imageIndex} out of range for reel {column}");
@@ -1022,20 +912,7 @@ public class SlotView : MonoBehaviour
             return;
         }
 
-        bool skipScreen = gameManager != null && gameManager.uiManager != null && gameManager.uiManager.skipScreenToggle != null && gameManager.uiManager.skipScreenToggle.isOn;
 
-        if (skipScreen)
-        {
-            Sequence popSeq = DOTween.Sequence();
-            popSeq.AppendCallback(() => {
-                symbolImage.DOKill();
-                symbolImage.transform.localScale = Vector3.one;
-            });
-            popSeq.Append(symbolImage.transform.DOScale(1.2f, 0.2f).SetEase(Ease.OutBack));
-            popSeq.Append(symbolImage.transform.DOScale(1f, 0.2f).SetEase(Ease.InBack));
-            winTweens.Add(popSeq);
-            return;
-        }
 
         // Get the animation GameObject for this position
         var animGO = WinBox(winAnimationColumns, column, row);
@@ -1073,7 +950,7 @@ public class SlotView : MonoBehaviour
         List<Sprite> animSprites = animationSpriteArrays[symbolId];
         if (animSprites == null || animSprites.Count == 0)
         {
-            Debug.LogWarning($"[AnimateWinSymbol] No animation sprites for symbolId {symbolId} at col: {column}, row: {row}");
+            // Expected for most symbols now
             return;
         }
 
@@ -1201,73 +1078,7 @@ public class SlotView : MonoBehaviour
 
     #endregion
 
-    #region Mask and Non-Display Icon Management
 
-    private void EnableAllMasks()
-    {
-        if (reelMask == null) return;
-        reelMask.enabled = true;
-    }
-
-    private void DisableAllMasks()
-    {
-        if (reelMask == null) return;
-        reelMask.enabled = false;
-    }
-
-    
-
-    private void EnableAllNonDisplayIcons()
-    {
-        if (reelNonDisplayIconsList == null) return;
-
-        foreach (var reelIcons in reelNonDisplayIconsList)
-        {
-            if (reelIcons.topIcons != null)
-            {
-                foreach (var icon in reelIcons.topIcons)
-                {
-                    if (icon != null) icon.SetActive(true);
-                }
-            }
-
-            if (reelIcons.bottomIcons != null)
-            {
-                foreach (var icon in reelIcons.bottomIcons)
-                {
-                    if (icon != null) icon.SetActive(true);
-                }
-            }
-        }
-    }
-
-    private void DisableAllNonDisplayIcons()
-    {
-        if (reelNonDisplayIconsList == null) return;
-
-        foreach (var reelIcons in reelNonDisplayIconsList)
-        {
-            if (reelIcons.topIcons != null)
-            {
-                foreach (var icon in reelIcons.topIcons)
-                {
-                    if (icon != null) icon.SetActive(false);
-                }
-            }
-
-            if (reelIcons.bottomIcons != null)
-            {
-                foreach (var icon in reelIcons.bottomIcons)
-                {
-                    if (icon != null) icon.SetActive(false);
-                }
-            }
-        }
-    }
-
-    #endregion
-
-    #region Helper Methods
 
     internal List<List<int>> GetCurrentDisplayMatrix()
     {
@@ -1290,59 +1101,6 @@ public class SlotView : MonoBehaviour
         KillWinTweens();
     }
 
-    /// <summary>
-    /// Apply sticky wild overlays: enable the overlay GO and set its Image sprite
-    /// to the correct wild multiplier variant.
-    /// </summary>
-    private void ApplyStickyWilds(Dictionary<string, int> stickyWilds)
-    {
-        if (stickyWilds == null) return;
-
-        foreach (var kvp in stickyWilds)
-        {
-            string[] parts = kvp.Key.Split('_');
-            if (parts.Length == 2 &&
-                int.TryParse(parts[0], out int row) &&
-                int.TryParse(parts[1], out int col))
-            {
-                var go = WinBox(stickyWildColumns, col, row);
-                if (go)
-                {
-                    go.SetActive(true);
-
-                    // Set the overlay image to the correct wild multiplier sprite
-                    int multiplier = kvp.Value;
-                    int wildSpriteId = GetWildSpriteIdForMultiplier(multiplier);
-                    Image img = go.GetComponent<Image>();
-                    if (img != null && wildSpriteId >= 0 && wildSpriteId < symbolSprites.Length)
-                    {
-                        img.sprite = symbolSprites[wildSpriteId];
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Maps a wild multiplier value to the correct sprite ID.
-    /// 1x → 11 (Wild), 2x → 13 (Wild2x), 3x → 14 (Wild3x), 5x → 15 (Wild5x)
-    /// </summary>
-    private int GetWildSpriteIdForMultiplier(int multiplier)
-    {
-        return 10;
-    }
-
-    /// <summary>
-    /// Clear sticky wild state — call when free spins end.
-    /// </summary>
-    internal void ClearStickyWilds()
-    {
-        currentStickyWilds = null;
-        DisableColumns(stickyWildColumns);
-    }
-
-    #endregion
-
     #region Cleanup
 
     private void OnDestroy()
@@ -1363,16 +1121,6 @@ public class ReelImages
 [System.Serializable]
 public class ColumnOverlays
 {
-    [Tooltip("Row 0 = top, Row 1, Row 2, Row 3 = bottom")]
-    public GameObject[] rows = new GameObject[4];
-}
-
-[System.Serializable]
-public class ReelNonDisplayIcons
-{
-    [Tooltip("Top non-display icons (indices 0-5) that should be hidden when not spinning")]
-    public List<GameObject> topIcons = new List<GameObject>();
-    
-    [Tooltip("Bottom non-display icons (indices 10-15) that should be hidden when not spinning")]
-    public List<GameObject> bottomIcons = new List<GameObject>();
+    [Tooltip("Row 0 = top, Row 1, Row 2 = bottom")]
+    public GameObject[] rows = new GameObject[3];
 }

@@ -256,9 +256,7 @@ public class GameManager : MonoBehaviour
     {
         double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
         double multiplier = totalBet > 0 ? (result.winAmount / totalBet) : 0;
-        bool skipScreen = uiManager.skipScreenToggle != null && uiManager.skipScreenToggle.isOn;
-
-        if (multiplier >= 5 && !skipScreen)
+        if (multiplier >= 5)
         {
             waitingForSpecialWin = true;
         }
@@ -386,20 +384,6 @@ public class GameManager : MonoBehaviour
             freeSpinsRemaining = serverSpinsRemaining;
         }
 
-        // Show overlay scatter extra spins popup ONLY if round is NOT over
-        // When isRoundOver=true, go directly to end popup regardless of overlay scatter
-        if (lastResult.overlayScatterData != null && lastResult.overlayScatterData.isTriggered && !isRoundOver)
-        {
-            if (isInFreeSpins)
-            {
-                uiManager.ShowExtraFreeSpinsPopup(lastResult.overlayScatterData.extraSpins);
-
-                // Wait for user to close popup before continuing
-                lastResult = null;
-                currentState = GameState.Idle;
-                return;
-            }
-        }
 
         // Check if free spins were just triggered (initial trigger)
         if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered)
@@ -536,12 +520,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(DelayBeforeFirstFreeSpin());
     }
 
-    internal void ResumeAfterExtraSpinsPopup()
-    {
-        // Resume free spin cycle after extra spins popup is closed
-        // Bypass intro animation and continue to next spin
-        StartCoroutine(DelayBeforeNextFreeSpin());
-    }
 
     private IEnumerator DelayBeforeFirstFreeSpin()
     {
@@ -566,12 +544,6 @@ public class GameManager : MonoBehaviour
     {
         isInFreeSpins = false;
         freeSpinsRemaining = 0;
-
-        // Clear sticky wild overlays and stored state
-        if (slotView != null)
-        {
-            slotView.ClearStickyWilds();
-        }
 
         uiManager.OnFreeSpinsEnded(totalRoundWin, totalSpinsUsed);
 
