@@ -49,9 +49,6 @@ public class SlotView : MonoBehaviour
     [Header("Animation Settings - Casino Style")]
     [SerializeField] private float anticipationUpDistance = 20f;
     [SerializeField] private float anticipationUpDuration = 0.12f;
-    [SerializeField] private float dropDownDistance = 15f;
-    [SerializeField] private float dropDownDuration = 0.12f;
-    [SerializeField] private float settleBounceDuration = 0.18f;
 
     [Header("Win Animation Settings")]
     [SerializeField] private float winPopDuration = 0.4f;
@@ -61,8 +58,6 @@ public class SlotView : MonoBehaviour
     [Header("Stop Animation Settings")]
     [SerializeField] private float stopOvershootDistance = 50f;
     [SerializeField] private float stopOvershootDuration = 0.20f;
-    [SerializeField] private float stopBounceBackDistance = 15f;
-    [SerializeField] private float stopBounceBackDuration = 0.25f;
     [SerializeField] private float stopSettleDuration = 0.30f;
 
     [Header("Quick Spin Settings")]
@@ -326,17 +321,12 @@ public class SlotView : MonoBehaviour
 
         startSequence.Append(
             slotTransform.DOLocalMoveY(middlePosition + anticipationUpDistance, anticipationUpDuration)
-                .SetEase(Ease.OutCubic)
+                .SetEase(Ease.OutQuad)
         );
 
         startSequence.Append(
-            slotTransform.DOLocalMoveY(middlePosition - dropDownDistance, dropDownDuration)
-                .SetEase(Ease.InCubic)
-        );
-
-        startSequence.Append(
-            slotTransform.DOLocalMoveY(middlePosition, settleBounceDuration)
-                .SetEase(Ease.OutBounce)
+            slotTransform.DOLocalMoveY(middlePosition, anticipationUpDuration * 0.5f)
+                .SetEase(Ease.InQuad)
         );
 
         startSequence.OnComplete(() => {
@@ -496,7 +486,7 @@ public class SlotView : MonoBehaviour
         }
         else
         {
-            longestStopTime = (4 * stagger) + stopOvershootDuration + stopBounceBackDuration + stopSettleDuration;
+            longestStopTime = (4 * stagger) + stopOvershootDuration + stopSettleDuration;
         }
 
         yield return new WaitForSeconds(longestStopTime);
@@ -563,12 +553,12 @@ public class SlotView : MonoBehaviour
 
             quickStopSequence.Append(
                 slotTransform.DOLocalMoveY(middlePosition - quickStopOvershoot, quickStopDuration * 0.3f)
-                    .SetEase(Ease.InCubic)
+                    .SetEase(Ease.OutQuad)
             );
 
             quickStopSequence.Append(
                 slotTransform.DOLocalMoveY(middlePosition, quickStopDuration * 0.7f)
-                    .SetEase(Ease.OutBack, 1.2f)
+                    .SetEase(Ease.InOutQuad)
             );
 
             quickStopSequence.OnComplete(() => PlayStopAnimationsForColumn(columnIndex));
@@ -581,17 +571,12 @@ public class SlotView : MonoBehaviour
 
             stopSequence.Append(
                 slotTransform.DOLocalMoveY(middlePosition - stopOvershootDistance, stopOvershootDuration)
-                    .SetEase(Ease.InCubic)
-            );
-
-            stopSequence.Append(
-                slotTransform.DOLocalMoveY(middlePosition + stopBounceBackDistance, stopBounceBackDuration)
-                    .SetEase(Ease.OutCubic)
+                    .SetEase(Ease.OutQuad)
             );
 
             stopSequence.Append(
                 slotTransform.DOLocalMoveY(middlePosition, stopSettleDuration)
-                    .SetEase(Ease.OutBounce)
+                    .SetEase(Ease.InOutQuad)
             );
 
             stopSequence.OnComplete(() => PlayStopAnimationsForColumn(columnIndex));
