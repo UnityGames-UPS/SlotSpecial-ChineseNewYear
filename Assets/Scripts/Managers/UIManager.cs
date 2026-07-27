@@ -15,6 +15,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Loading & Intro")]
     [SerializeField] private GameObject gameScreen;
+    [SerializeField] private GameObject gameLogoObject;
 
     [Header("Backgrounds")]
     [SerializeField] private GameObject normalSpinBackground;
@@ -30,6 +31,16 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text winAmountText;
     [SerializeField] private GameObject winTextObject;
     [SerializeField] private GameObject goodLuckObject;
+
+    [Header("Bonus Wheel")]
+    [SerializeField] private WheelSpinController mainWheel;
+    [SerializeField] private GameObject wheelScreen;
+    [SerializeField] private Button wheelSpinButton;
+    [SerializeField] private CanvasGroup transitionBackFilm;
+    
+    [Header("Wheel Result Popup")]
+    [SerializeField] private GameObject wheelWinPopup;
+    [SerializeField] private TMP_Text wheelWinAmountText;
 
     [Header("Win Popup Panel")]
     [SerializeField] private GameObject winPopupPanel;
@@ -102,7 +113,6 @@ public class UIManager : MonoBehaviour
     [Header("Free Spin Count Display - Game Screen")]
     [SerializeField] private GameObject freeSpinCountContainer;
     [SerializeField] private TMP_Text remainingFreeSpinsText;
-    [SerializeField] private TMP_Text totalEarnedFreeSpinsText;
 
 
 
@@ -183,6 +193,9 @@ public class UIManager : MonoBehaviour
         if (winRingObject) winRingObject.SetActive(false);
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
+        if (wheelScreen) wheelScreen.SetActive(false);
+        if (wheelWinPopup) wheelWinPopup.SetActive(false);
+        if (transitionBackFilm) transitionBackFilm.gameObject.SetActive(false);
     }
 
     #region Loading & Intro Sequence
@@ -257,6 +270,8 @@ public class UIManager : MonoBehaviour
 
         if (expandButton) expandButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExpand(); });
         if (shrinkButton) shrinkButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
+
+        if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
 
         // Speed buttons setup (Three-layer Toggle)
         if (normalSpeedButton) normalSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
@@ -1030,6 +1045,7 @@ public class UIManager : MonoBehaviour
         
         if (normalSpinBackground) normalSpinBackground.SetActive(false);
         if (freeSpinBackground) freeSpinBackground.SetActive(true);
+        if (gameLogoObject) gameLogoObject.SetActive(false);
 
         UpdateFreeSpinCount(spinsAwarded);
         gameManager.StartFirstFreeSpin();
@@ -1043,6 +1059,7 @@ public class UIManager : MonoBehaviour
 
         if (freeSpinBackground) freeSpinBackground.SetActive(false);
         if (normalSpinBackground) normalSpinBackground.SetActive(true);
+        if (gameLogoObject) gameLogoObject.SetActive(true);
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
 
@@ -1056,8 +1073,7 @@ public class UIManager : MonoBehaviour
         if (remainingSpins > 0)
         {
             if (freeSpinCountContainer) freeSpinCountContainer.SetActive(true);
-            if (remainingFreeSpinsText) remainingFreeSpinsText.text = remainingSpins.ToString();
-            if (totalEarnedFreeSpinsText) totalEarnedFreeSpinsText.text = totalFreeSpinsAwarded.ToString();
+            if (remainingFreeSpinsText) remainingFreeSpinsText.text = $"FREE GAME  {remainingSpins}  OF  {totalFreeSpinsAwarded}";
         }
         else
         {
@@ -1284,6 +1300,131 @@ public class UIManager : MonoBehaviour
     private void OnExitButtonPressed()
     {
         if (gameManager != null) gameManager.ExitGame();
+    }
+
+    #endregion
+
+    #region Bonus Game
+
+    internal void TriggerUSpinBonus(USpinResultData resultData, System.Action onComplete)
+    {
+        StartCoroutine(USpinBonusSequence(resultData, onComplete));
+    }
+
+    private bool wheelSpinTriggered = false;
+
+    private void OnWheelSpinClicked()
+    {
+        if (wheelSpinTriggered) return;
+        wheelSpinTriggered = true;
+        if (wheelSpinButton) wheelSpinButton.interactable = false;
+    }
+
+    private IEnumerator USpinBonusSequence(USpinResultData resultData, System.Action onComplete)
+    {
+        // 1. Fade in back film
+        if (transitionBackFilm != null)
+        {
+            transitionBackFilm.gameObject.SetActive(true);
+            transitionBackFilm.alpha = 0f;
+            yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+            yield return new WaitForSeconds(0.5f); // Hold for 0.5s at peak
+        }
+        
+        // 2. Open spin wheel screen
+        if (wheelScreen) wheelScreen.SetActive(true);
+        if (wheelWinPopup) wheelWinPopup.SetActive(false);
+        
+        // Hide normal spin/stop buttons, show wheel spin button
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
+        if (spinButton) spinButton.gameObject.SetActive(false);
+        if (wheelSpinButton) 
+        {
+            wheelSpinButton.gameObject.SetActive(true);
+            wheelSpinButton.interactable = true;
+        }
+
+        // 3. Fade out back film
+        if (transitionBackFilm != null)
+        {
+            yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+            transitionBackFilm.gameObject.SetActive(false);
+        }
+
+        // 4. Wait for user to click wheel spin
+        wheelSpinTriggered = false;
+        yield return new WaitUntil(() => wheelSpinTriggered);
+
+        // 5. Spin Wheel
+        int mainTargetIndex = resultData.sliceIndex;
+        bool mainSpinDone = false;
+        if (mainWheel != null)
+        {
+            mainWheel.SpinToIndex(mainTargetIndex, () => mainSpinDone = true);
+        }
+        else
+        {
+            mainSpinDone = true;
+        }
+        yield return new WaitUntil(() => mainSpinDone);
+        yield return new WaitForSeconds(0.5f); // Brief pause after stop
+
+        // 6. Handle the two possibilities
+        if (resultData.type == "FREE_GAMES")
+        {
+            // Transition back immediately for Free Games
+            if (transitionBackFilm != null)
+            {
+                transitionBackFilm.gameObject.SetActive(true);
+                transitionBackFilm.alpha = 0f;
+                yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+                yield return new WaitForSeconds(0.5f);
+            }
+            
+            if (wheelScreen) wheelScreen.SetActive(false);
+            
+            if (transitionBackFilm != null)
+            {
+                yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+                transitionBackFilm.gameObject.SetActive(false);
+            }
+        }
+        else // MULTIPLIER / CREDITS
+        {
+            // Show wheel win popup
+            if (wheelWinPopup) wheelWinPopup.SetActive(true);
+            if (wheelWinAmountText)
+            {
+                wheelWinAmountText.text = $"{resultData.winInCash:F2}";
+            }
+            
+            // Wait a bit to let the player read the popup
+            yield return new WaitForSeconds(2.5f);
+            
+            // Transition back
+            if (transitionBackFilm != null)
+            {
+                transitionBackFilm.gameObject.SetActive(true);
+                transitionBackFilm.alpha = 0f;
+                yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+                yield return new WaitForSeconds(0.5f);
+            }
+            
+            if (wheelWinPopup) wheelWinPopup.SetActive(false);
+            if (wheelScreen) wheelScreen.SetActive(false);
+            
+            if (transitionBackFilm != null)
+            {
+                yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+                transitionBackFilm.gameObject.SetActive(false);
+            }
+        }
+
+        // Restore normal spin button state before completing
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        if (spinButton) spinButton.gameObject.SetActive(true);
+
+        onComplete?.Invoke();
     }
 
     #endregion

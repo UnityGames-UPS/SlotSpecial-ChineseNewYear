@@ -46,8 +46,9 @@ public class USpinFeature
 [Serializable]
 public class USpinSegment
 {
+    public int sliceIndex;
     public string type;
-    public double credits;
+    public double multiplier;
     public int freeGames;
 }
 
@@ -170,7 +171,17 @@ public class ServerPosition
 public class ServerUSpinResult
 {
     public bool triggered;
-    public int segmentIndex;
+    public ServerUSpinResultDetail result;
+}
+
+[Serializable]
+public class ServerUSpinResultDetail
+{
+    public int sliceIndex;
+    public string type;
+    public double multiplierAwarded;
+    public int freeGamesAwarded;
+    public double winInCash;
 }
 
 [Serializable]
@@ -235,6 +246,9 @@ public class GameConfig
     public int minWinMultiplier = 10;
     public int initialFreeSpins = 12;
     public ExtraSpinsData extraSpinsData; // Keep to avoid compilation error in UI
+
+    // uSpin
+    public List<USpinSegment> uSpinSegments;
 }
 
 [Serializable]
@@ -276,6 +290,9 @@ public class SpinResult
     public int serverSpinsUsed;
     public double serverTotalRoundWin;
     public bool isRoundOver;
+    
+    // Server-authoritative wheel data
+    public USpinResultData uSpinData;
 }
 
 [Serializable]
@@ -311,6 +328,17 @@ public class OverlayScatterData
     public int count;
     public int extraSpins;
     public List<List<int>> positions;
+}
+
+[Serializable]
+public class USpinResultData
+{
+    public bool triggered;
+    public int sliceIndex;
+    public string type;
+    public double multiplierAwarded;
+    public int freeGamesAwarded;
+    public double winInCash;
 }
 
 #endregion
@@ -454,6 +482,11 @@ public static class InitDataConverter
             {
                 config.initialFreeSpins = serverData.features.freeGames.maxTotalFreeGames;
             }
+
+            if (serverData.features.uSpin != null && serverData.features.uSpin.segments != null)
+            {
+                config.uSpinSegments = serverData.features.uSpin.segments;
+            }
         }
 
         return config;
@@ -531,7 +564,19 @@ public static class InitDataConverter
             serverSpinsRemaining = spinsRemaining,
             serverSpinsUsed = spinsUsed,
             serverTotalRoundWin = totalRoundWin,
-            isRoundOver = isRoundOver
+            isRoundOver = isRoundOver,
+            
+            uSpinData = (serverResponse.payload.uSpin != null && serverResponse.payload.uSpin.triggered && serverResponse.payload.uSpin.result != null)
+                ? new USpinResultData
+                {
+                    triggered = true,
+                    sliceIndex = serverResponse.payload.uSpin.result.sliceIndex,
+                    type = serverResponse.payload.uSpin.result.type,
+                    multiplierAwarded = serverResponse.payload.uSpin.result.multiplierAwarded,
+                    freeGamesAwarded = serverResponse.payload.uSpin.result.freeGamesAwarded,
+                    winInCash = serverResponse.payload.uSpin.result.winInCash
+                }
+                : null
         };
 
         return result;

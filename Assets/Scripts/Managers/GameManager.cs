@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] internal UIManager uiManager;
     [SerializeField] private PopupManager popupManager;
     [SerializeField] private SlotView slotView;
+    [SerializeField] internal WheelSpinController wheelController;
 
     [Header("Spin Settings")]
     [SerializeField] private float normalSpinDuration = 3.5f;
@@ -62,6 +63,11 @@ public class GameManager : MonoBehaviour
         if (initialMatrix != null && slotView != null)
         {
             slotView.SetInitialMatrix(initialMatrix);
+        }
+
+        if (wheelController != null && gameConfig.uSpinSegments != null)
+        {
+            wheelController.OverrideSegmentsWithData(gameConfig.uSpinSegments);
         }
 
         isInitialized = true;
@@ -216,6 +222,12 @@ public class GameManager : MonoBehaviour
 
     private void OnReelsStoppedComplete()
     {
+        if (lastResult != null && lastResult.uSpinData != null && lastResult.uSpinData.triggered)
+        {
+            StartCoroutine(DelayUSpinTriggerResult());
+            return;
+        }
+
         if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered && !isInFreeSpins)
         {
             StartCoroutine(DelayScatterTriggerResult());
@@ -316,6 +328,24 @@ public class GameManager : MonoBehaviour
         // Wait for scatter hit animations to play
         yield return new WaitForSeconds(3.5f);
         ProcessSpinResult();
+    }
+
+    private IEnumerator DelayUSpinTriggerResult()
+    {
+        AudioManager.Instance?.Play3ScatterHit();
+
+        if (slotView != null)
+        {
+            slotView.AnimateUSpinWin();
+        }
+
+        yield return new WaitForSeconds(3.5f);
+
+        uiManager.TriggerUSpinBonus(lastResult.uSpinData, () =>
+        {
+            lastResult.uSpinData.triggered = false;
+            OnReelsStoppedComplete();
+        });
     }
 
     private IEnumerator DelayBeforeNextRound()
