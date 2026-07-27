@@ -122,6 +122,7 @@ public class SocketIOManager : MonoBehaviour
         gameSocket.On<string>("result", OnResultReceived);
         gameSocket.On<string>("pong", OnPongReceived);
         gameSocket.On<string>("AnotherDevice", OnAnotherDevice);
+        gameSocket.On<string>("balance:sync", OnBalanceSyncReceived);
 
         socketManager.Open();
     }
@@ -290,6 +291,30 @@ public class SocketIOManager : MonoBehaviour
         if (popupManager != null)
         {
             popupManager.ShowAnotherDeviceError();
+        }
+    }
+
+    private void OnBalanceSyncReceived(string jsonData)
+    {
+        Debug.Log($"[SocketIO] Balance Sync received: {jsonData}");
+
+        try
+        {
+            var syncData = JsonConvert.DeserializeObject<BalanceSyncData>(jsonData);
+            
+            if (gameManager != null && gameManager.playerData != null)
+            {
+                gameManager.playerData.balance = syncData.balance;
+                
+                if (uiManager != null)
+                {
+                    uiManager.UpdateBalanceDisplay();
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[SocketIO] Balance Sync parse failed: {e.Message}");
         }
     }
 
@@ -473,4 +498,12 @@ public class AuthTokenData
     public string cookie;
     public string socketURL;
     public string nameSpace;
+}
+
+[Serializable]
+public class BalanceSyncData
+{
+    public string userId;
+    public string gameId;
+    public double balance;
 }

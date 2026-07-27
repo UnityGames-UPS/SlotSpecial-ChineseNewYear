@@ -1159,7 +1159,7 @@ public class UIManager : MonoBehaviour
 
     #region Display Updates
 
-    private void UpdateBalanceDisplay()
+    internal void UpdateBalanceDisplay()
     {
         if (balanceText)
         {
@@ -1189,40 +1189,16 @@ public class UIManager : MonoBehaviour
     {
         if (balanceTween != null) balanceTween.Kill();
 
-        // Start from the optimistic value (already shown at spin-start) if available,
-        // otherwise start from the current stored player balance.
-        double oldBalance = hasOptimisticBalance ? optimisticBalance : gameManager.playerData.balance;
         hasOptimisticBalance = false;
-        float duration = durationOverride > 0f ? durationOverride : balanceCountDuration;
-
-        // Always tween so the update is visibly confirmed when the server responds.
-        balanceTween = DOTween.To(() => oldBalance, 
-            x => { if (balanceText != null) balanceText.text = "BALANCE : " + x.ToString("F2"); }, 
-            newBalance, 
-            duration)
-         .SetEase(Ease.Linear)
-         .OnComplete(() => { if (balanceText != null) balanceText.text = "BALANCE : " + newBalance.ToString("F2"); });
+        
+        if (balanceText != null) balanceText.text = "BALANCE : " + newBalance.ToString("F2");
     }
 
     private void AnimateWinUpdate(double winAmount)
     {
         if (winTween != null) winTween.Kill();
 
-        if (winAmount > currentWinDisplayValue)
-        {
-            double startValue = currentWinDisplayValue;
-            winTween = DOTween.To(
-                () => startValue,
-                x => UpdateWinDisplay(x),
-                winAmount,
-                winCountDuration
-            ).SetEase(Ease.OutCubic)
-             .OnComplete(() => UpdateWinDisplay(winAmount));
-        }
-        else
-        {
-            UpdateWinDisplay(winAmount);
-        }
+        UpdateWinDisplay(winAmount);
     }
 
     #endregion
@@ -1419,6 +1395,8 @@ public class UIManager : MonoBehaviour
                 transitionBackFilm.gameObject.SetActive(false);
             }
         }
+
+        if (wheelSpinButton) wheelSpinButton.gameObject.SetActive(false);
 
         // Restore normal spin button state before completing
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);

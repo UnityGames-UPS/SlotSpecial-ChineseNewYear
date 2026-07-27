@@ -8322,7 +8322,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &524679666
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11977,7 +11977,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &726493339
 RectTransform:
   m_ObjectHideFlags: 0
@@ -13856,6 +13856,7 @@ MonoBehaviour:
   popupManager: {fileID: 1363796882}
   jsFunctCalls: {fileID: 1504510397}
   gameScreen: {fileID: 749700606}
+  gameLogoObject: {fileID: 524679665}
   normalSpinBackground: {fileID: 0}
   freeSpinBackground: {fileID: 0}
   betAmountText: {fileID: 2087443015}
@@ -18476,7 +18477,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f521a04de7f494272a617b2719edd271, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SocketIOManager
-  testToken: f874e0adcf86402aba455a6c4ef2d477
+  testToken: b3de419c2c9c4645a221053a76b8b4a7
   gameManager: {fileID: 1206269883}
   uiManager: {fileID: 885496184}
   popupManager: {fileID: 1363796882}
