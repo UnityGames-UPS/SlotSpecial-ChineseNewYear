@@ -188,6 +188,16 @@ public class ServerUSpinResultDetail
 public class ServerMoneyBagResult
 {
     public bool triggered;
+    public ServerMoneyBagResultDetail result;
+}
+
+[Serializable]
+public class ServerMoneyBagResultDetail
+{
+    public int pickedIndex;
+    public List<int> revealed;
+    public int creditsAwarded;
+    public double winInCash;
 }
 
 [Serializable]
@@ -293,6 +303,7 @@ public class SpinResult
     
     // Server-authoritative wheel data
     public USpinResultData uSpinData;
+    public MoneyBagResultData moneyBagData;
 }
 
 [Serializable]
@@ -338,6 +349,16 @@ public class USpinResultData
     public string type;
     public double multiplierAwarded;
     public int freeGamesAwarded;
+    public double winInCash;
+}
+
+[Serializable]
+public class MoneyBagResultData
+{
+    public bool triggered;
+    public int pickedIndex;
+    public List<int> revealed;
+    public int creditsAwarded;
     public double winInCash;
 }
 
@@ -575,6 +596,17 @@ public static class InitDataConverter
                     multiplierAwarded = serverResponse.payload.uSpin.result.multiplierAwarded,
                     freeGamesAwarded = serverResponse.payload.uSpin.result.freeGamesAwarded,
                     winInCash = serverResponse.payload.uSpin.result.winInCash
+                }
+                : null,
+                
+            moneyBagData = (serverResponse.payload.moneyBag != null && serverResponse.payload.moneyBag.triggered && serverResponse.payload.moneyBag.result != null)
+                ? new MoneyBagResultData
+                {
+                    triggered = true,
+                    pickedIndex = serverResponse.payload.moneyBag.result.pickedIndex,
+                    revealed = serverResponse.payload.moneyBag.result.revealed,
+                    creditsAwarded = serverResponse.payload.moneyBag.result.creditsAwarded,
+                    winInCash = serverResponse.payload.moneyBag.result.winInCash
                 }
                 : null
         };

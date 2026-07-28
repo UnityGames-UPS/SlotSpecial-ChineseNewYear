@@ -228,6 +228,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (lastResult != null && lastResult.moneyBagData != null && lastResult.moneyBagData.triggered)
+        {
+            StartCoroutine(DelayMoneyBagTriggerResult());
+            return;
+        }
+
         if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered && !isInFreeSpins)
         {
             StartCoroutine(DelayScatterTriggerResult());
@@ -344,6 +350,24 @@ public class GameManager : MonoBehaviour
         uiManager.TriggerUSpinBonus(lastResult.uSpinData, () =>
         {
             lastResult.uSpinData.triggered = false;
+            OnReelsStoppedComplete();
+        });
+    }
+
+    private IEnumerator DelayMoneyBagTriggerResult()
+    {
+        AudioManager.Instance?.Play3ScatterHit(); // Using scatter hit as generic trigger sound for now
+
+        if (slotView != null)
+        {
+            slotView.AnimateMoneyBagWin();
+        }
+
+        yield return new WaitForSeconds(3.5f);
+
+        uiManager.TriggerMoneyBagBonus(lastResult.moneyBagData, () =>
+        {
+            lastResult.moneyBagData.triggered = false;
             OnReelsStoppedComplete();
         });
     }

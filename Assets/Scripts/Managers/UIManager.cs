@@ -42,6 +42,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject wheelWinPopup;
     [SerializeField] private TMP_Text wheelWinAmountText;
 
+    [Header("Money Bag Bonus")]
+    [SerializeField] private MoneyBagController moneyBagController;
+
     [Header("Win Popup Panel")]
     [SerializeField] private GameObject winPopupPanel;
     [SerializeField] private GameObject winRingObject;
@@ -1397,6 +1400,74 @@ public class UIManager : MonoBehaviour
         }
 
         if (wheelSpinButton) wheelSpinButton.gameObject.SetActive(false);
+
+        // Restore normal spin button state before completing
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        if (spinButton) spinButton.gameObject.SetActive(true);
+
+        onComplete?.Invoke();
+    }
+
+    internal void TriggerMoneyBagBonus(MoneyBagResultData resultData, System.Action onComplete)
+    {
+        StartCoroutine(MoneyBagBonusSequence(resultData, onComplete));
+    }
+
+    private IEnumerator MoneyBagBonusSequence(MoneyBagResultData resultData, System.Action onComplete)
+    {
+        // 1. Fade in back film
+        if (transitionBackFilm != null)
+        {
+            transitionBackFilm.gameObject.SetActive(true);
+            transitionBackFilm.alpha = 0f;
+            yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+            yield return new WaitForSeconds(0.5f); // Hold for 0.5s at peak
+        }
+        
+        // Hide normal spin/stop buttons
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
+        if (spinButton) spinButton.gameObject.SetActive(false);
+
+        bool moneyBagDone = false;
+        
+        if (moneyBagController != null)
+        {
+            // Activate and prepare MoneyBag interactive screen BEFORE fading out film
+            moneyBagController.gameObject.SetActive(true);
+            moneyBagController.StartMoneyBagBonus(resultData, () => moneyBagDone = true);
+
+            // 2. Fade out back film
+            if (transitionBackFilm != null)
+            {
+                yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+                transitionBackFilm.gameObject.SetActive(false);
+            }
+
+            yield return new WaitUntil(() => moneyBagDone);
+
+            // Wait a bit to let the player read the result
+            yield return new WaitForSeconds(1.0f);
+            
+            // Transition back
+            if (transitionBackFilm != null)
+            {
+                transitionBackFilm.gameObject.SetActive(true);
+                transitionBackFilm.alpha = 0f;
+                yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+        else
+        {
+            moneyBagDone = true;
+            Debug.LogError("MoneyBagController is not assigned in UIManager!");
+        }
+
+        if (transitionBackFilm != null)
+        {
+            yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+            transitionBackFilm.gameObject.SetActive(false);
+        }
 
         // Restore normal spin button state before completing
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);

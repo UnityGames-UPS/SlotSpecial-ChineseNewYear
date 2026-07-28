@@ -681,6 +681,26 @@ public class SlotView : MonoBehaviour
         }
     }
 
+    internal void AnimateMoneyBagWin()
+    {
+        if (currentDisplayMatrix == null) return;
+
+        KillWinTweens();
+        AudioManager.Instance?.PlayWinLine();
+
+        for (int col = 0; col < 5; col++)
+        {
+            if (col >= currentDisplayMatrix.Count) continue;
+            for (int row = 0; row < currentDisplayMatrix[col].Count; row++)
+            {
+                if (currentDisplayMatrix[col][row] == 12) // MoneyBag Symbol ID
+                {
+                    EnableWinBox(col, row);
+                }
+            }
+        }
+    }
+
     private void AnimateSymbolSingleLoop(int column, int row, int loopCount = 1)
     {
         if (column >= reelImagesList.Count) return;
