@@ -1105,7 +1105,7 @@ public class SlotView : MonoBehaviour
     #endregion
 
 
-
+    
     internal List<List<int>> GetCurrentDisplayMatrix()
     {
         return currentDisplayMatrix;
@@ -1115,6 +1115,7 @@ public class SlotView : MonoBehaviour
     {
         return isSpinning;
     }
+
 
     private void KillAllTweens()
     {
