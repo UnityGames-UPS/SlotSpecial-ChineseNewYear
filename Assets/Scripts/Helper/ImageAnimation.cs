@@ -11,12 +11,6 @@ public class ImageAnimation : MonoBehaviour
         PAUSED
     }
 
-    public enum AnimationMode
-    {
-        SINGLE_PHASE,
-        TWO_PHASE
-    }
-
     public static ImageAnimation Instance;
 
     public List<Sprite> textureArray;
@@ -24,9 +18,6 @@ public class ImageAnimation : MonoBehaviour
     public bool useSharedMaterial = true;
     public bool doLoopAnimation = true;
     
-    [Header("Dynamic Timing")]
-    public bool useDynamicFramerate = false;
-    public float dynamicLoopDuration = 1.0f;
     public System.Action<int> onLoopComplete;
     private int currentLoopCount = 0;
     
@@ -37,28 +28,11 @@ public class ImageAnimation : MonoBehaviour
     public ImageState currentAnimationState;
 
     private int indexOfTexture;
-    private float idealFrameRate = 0.0416666679f;
+    private float idealFrameRate = 0.0416666679f; // ~24 fps
     private float delayBetweenAnimation;
 
     public float AnimationSpeed = 5f;
     public float delayBetweenLoop;
-
-    [Header("Two Phase Animation (Optional)")]
-    public AnimationMode animationMode = AnimationMode.SINGLE_PHASE;
-    
-    [Tooltip("Index where Phase 2 starts (Phase 1 is 0 to this index-1)")]
-    public int phase2StartIndex = 0;
-    
-    [Tooltip("How many times Phase 1 should loop (-1 = infinite, 0 = skip phase 1, 1+ = specific count)")]
-    public int phase1LoopCount = 1;
-    
-    [Tooltip("How many times Phase 2 should loop (-1 = infinite, 0 = skip phase 2, 1+ = specific count)")]
-    public int phase2LoopCount = -1;
-
-    // Two-phase tracking
-    private int currentPhase = 1;
-    private int phase1CurrentLoop = 0;
-    private int phase2CurrentLoop = 0;
 
     private void Awake()
     {
@@ -66,19 +40,29 @@ public class ImageAnimation : MonoBehaviour
         {
             Instance = this;
         }
+        EnsureRenderer();
         if (StartOnAwake)
         {
             StartAnimation();
         }
     }
 
+    private void EnsureRenderer()
+    {
+        if (rendererDelegate == null)
+        {
+            rendererDelegate = GetComponent<Image>();
+        }
+    }
+
     void Start()
     {
-        //rendererDelegate= this.GetComponent<Image>();
+        EnsureRenderer();
     }
 
     private void OnEnable()
     {
+        EnsureRenderer();
         if (StartonEnable)
         {
             StartAnimation();
@@ -87,103 +71,34 @@ public class ImageAnimation : MonoBehaviour
 
     private void OnDisable()
     {
-        //rendererDelegate.sprite = textureArray[0];
         StopAnimation();
     }
 
     private void AnimationProcess()
     {
+        if (textureArray == null || textureArray.Count == 0) return;
+
         SetTextureOfIndex();
         indexOfTexture++;
 
-        // Use original logic if in SINGLE_PHASE mode
-        if (animationMode == AnimationMode.SINGLE_PHASE)
+        if (indexOfTexture >= textureArray.Count)
         {
-            if (indexOfTexture == textureArray.Count)
+            indexOfTexture = 0;
+            currentLoopCount++;
+            onLoopComplete?.Invoke(currentLoopCount);
+            
+            if (doLoopAnimation)
             {
-                indexOfTexture = 0;
-                currentLoopCount++;
-                onLoopComplete?.Invoke(currentLoopCount);
-                
-                if (doLoopAnimation)
-                {
-                    Invoke("AnimationProcess", delayBetweenAnimation + delayBetweenLoop);
-                }
+                Invoke(nameof(AnimationProcess), delayBetweenAnimation + delayBetweenLoop);
             }
             else
             {
-                Invoke("AnimationProcess", delayBetweenAnimation);
+                currentAnimationState = ImageState.NONE;
             }
         }
-        else // TWO_PHASE mode
+        else
         {
-            HandleTwoPhaseAnimation();
-        }
-    }
-
-    private void HandleTwoPhaseAnimation()
-    {
-        // Phase 1 logic
-        if (currentPhase == 1)
-        {
-            if (indexOfTexture >= phase2StartIndex)
-            {
-                // Phase 1 completed one loop
-                phase1CurrentLoop++;
-                
-                // Check if we should continue Phase 1 or move to Phase 2
-                if (phase1LoopCount == -1 || phase1CurrentLoop < phase1LoopCount)
-                {
-                    // Continue looping Phase 1
-                    indexOfTexture = 0;
-                    Invoke("AnimationProcess", delayBetweenAnimation + delayBetweenLoop);
-                }
-                else
-                {
-                    // Move to Phase 2
-                    currentPhase = 2;
-                    indexOfTexture = phase2StartIndex;
-                    
-                    // Skip Phase 2 if loop count is 0
-                    if (phase2LoopCount == 0)
-                    {
-                        currentAnimationState = ImageState.NONE;
-                        return;
-                    }
-                    
-                    Invoke("AnimationProcess", delayBetweenAnimation + delayBetweenLoop);
-                }
-            }
-            else
-            {
-                Invoke("AnimationProcess", delayBetweenAnimation);
-            }
-        }
-        // Phase 2 logic
-        else if (currentPhase == 2)
-        {
-            if (indexOfTexture >= textureArray.Count)
-            {
-                // Phase 2 completed one loop
-                phase2CurrentLoop++;
-                
-                // Check if we should continue Phase 2 or stop
-                if (phase2LoopCount == -1 || phase2CurrentLoop < phase2LoopCount)
-                {
-                    // Continue looping Phase 2
-                    indexOfTexture = phase2StartIndex;
-                    Invoke("AnimationProcess", delayBetweenAnimation + delayBetweenLoop);
-                }
-                else
-                {
-                    // Animation complete
-                    currentAnimationState = ImageState.NONE;
-                }
-            }
-            else
-            {
-                Invoke("AnimationProcess", delayBetweenAnimation);
-            }
+            Invoke(nameof(AnimationProcess), delayBetweenAnimation);
         }
     }
 
@@ -191,74 +106,61 @@ public class ImageAnimation : MonoBehaviour
     {
         if (textureArray == null || textureArray.Count == 0) return;
 
+        EnsureRenderer();
+        if (rendererDelegate == null) return;
+
         CancelInvoke(nameof(AnimationProcess));
         indexOfTexture = 0;
         currentLoopCount = 0;
-        
-        // Reset two-phase tracking
-        currentPhase = 1;
-        phase1CurrentLoop = 0;
-        phase2CurrentLoop = 0;
+        currentAnimationState = ImageState.PLAYING;
 
-        if (currentAnimationState == ImageState.NONE)
-        {
-            RevertToInitialState();
-            
-            if (useDynamicFramerate && textureArray != null && textureArray.Count > 0)
-            {
-                delayBetweenAnimation = dynamicLoopDuration / textureArray.Count;
-            }
-            else
-            {
-                delayBetweenAnimation = idealFrameRate * (float)textureArray.Count / AnimationSpeed;
-            }
-            
-            currentAnimationState = ImageState.PLAYING;
-            
-            // Skip Phase 1 if in TWO_PHASE mode and loop count is 0
-            if (animationMode == AnimationMode.TWO_PHASE && phase1LoopCount == 0)
-            {
-                currentPhase = 2;
-                indexOfTexture = phase2StartIndex;
-            }
-            
-            Invoke("AnimationProcess", delayBetweenAnimation);
-        }
+        RevertToInitialState();
+
+        delayBetweenAnimation = idealFrameRate * (float)textureArray.Count / AnimationSpeed;
+        if (delayBetweenAnimation <= 0) delayBetweenAnimation = 0.05f;
+
+        Invoke(nameof(AnimationProcess), delayBetweenAnimation);
+    }
+
+    public void PlayAnimation()
+    {
+        StartAnimation();
+    }
+
+    public void Play()
+    {
+        StartAnimation();
     }
 
     public void PauseAnimation()
     {
         if (currentAnimationState == ImageState.PLAYING)
         {
-            CancelInvoke("AnimationProcess");
+            CancelInvoke(nameof(AnimationProcess));
             currentAnimationState = ImageState.PAUSED;
         }
     }
 
     public void ResumeAnimation()
     {
-        if (currentAnimationState == ImageState.PAUSED && !IsInvoking("AnimationProcess"))
+        if (currentAnimationState == ImageState.PAUSED && !IsInvoking(nameof(AnimationProcess)))
         {
-            Invoke("AnimationProcess", delayBetweenAnimation);
+            Invoke(nameof(AnimationProcess), delayBetweenAnimation);
             currentAnimationState = ImageState.PLAYING;
         }
     }
 
     public void StopAnimation()
     {
-        if (currentAnimationState != 0)
+        if (currentAnimationState != ImageState.NONE)
         {
-            if (textureArray != null && textureArray.Count > 0)
+            EnsureRenderer();
+            if (rendererDelegate != null && textureArray != null && textureArray.Count > 0)
             {
                 rendererDelegate.sprite = textureArray[0];
             }
-            CancelInvoke("AnimationProcess");
+            CancelInvoke(nameof(AnimationProcess));
             currentAnimationState = ImageState.NONE;
-            
-            // Reset two-phase tracking
-            currentPhase = 1;
-            phase1CurrentLoop = 0;
-            phase2CurrentLoop = 0;
             currentLoopCount = 0;
         }
     }
@@ -266,9 +168,6 @@ public class ImageAnimation : MonoBehaviour
     public void RevertToInitialState()
     {
         indexOfTexture = 0;
-        currentPhase = 1;
-        phase1CurrentLoop = 0;
-        phase2CurrentLoop = 0;
         SetTextureOfIndex();
     }
 
@@ -276,11 +175,8 @@ public class ImageAnimation : MonoBehaviour
     {
         if (textureArray == null || textureArray.Count == 0 || indexOfTexture < 0 || indexOfTexture >= textureArray.Count) return;
 
-        if (useSharedMaterial)
-        {
-            rendererDelegate.sprite = textureArray[indexOfTexture];
-        }
-        else
+        EnsureRenderer();
+        if (rendererDelegate != null)
         {
             rendererDelegate.sprite = textureArray[indexOfTexture];
         }

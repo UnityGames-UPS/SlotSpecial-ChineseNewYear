@@ -628,7 +628,8 @@ public class SlotView : MonoBehaviour
         for (int row = 0; row < currentDisplayMatrix[col].Count; row++)
         {
             int symId = currentDisplayMatrix[col][row];
-            bool isScatter = (symId == actualScatterId || symId == 12);
+            // Exclude USpin symbol (ID 11) from landing animation
+            bool isScatter = (symId == actualScatterId && symId != 11) || symId == 12;
             int wildId = gameManager?.gameConfig != null ? gameManager.gameConfig.wildSymbolId : 10;
             bool isWild = (symId == wildId);
             
@@ -660,12 +661,20 @@ public class SlotView : MonoBehaviour
         }
     }
 
-    internal void AnimateUSpinWin()
+    internal void AnimateUSpinWin(System.Action onComplete = null)
     {
-        if (currentDisplayMatrix == null) return;
+        if (currentDisplayMatrix == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
 
         KillWinTweens();
         AudioManager.Instance?.PlayWinLine();
+
+        List<ImageAnimation> activeUSpinAnims = new List<ImageAnimation>();
+        int completedCount = 0;
+        int targetLoops = 2; // Exactly 2 loops of full animation
 
         for (int col = 0; col < 5; col++)
         {
@@ -675,9 +684,70 @@ public class SlotView : MonoBehaviour
                 if (currentDisplayMatrix[col][row] == 11) // USpin Symbol ID
                 {
                     EnableWinBox(col, row);
-                    AnimateWinSymbol(col, row);
+                    
+                    var animGO = WinBox(winAnimationColumns, col, row);
+                    if (animGO != null)
+                    {
+                        ImageAnimation imageAnim = animGO.GetComponent<ImageAnimation>();
+                        int imageIndex = 2 + row;
+                        Image symbolImage = (col < reelImagesList.Count && reelImagesList[col].images != null && imageIndex < reelImagesList[col].images.Count)
+                            ? reelImagesList[col].images[imageIndex]
+                            : null;
+
+                        if (imageAnim != null)
+                        {
+                            activeUSpinAnims.Add(imageAnim);
+
+                            List<Sprite> animSprites = animationSpriteArrays[11];
+                            imageAnim.textureArray = animSprites;
+                            imageAnim.doLoopAnimation = true;
+
+                            animGO.SetActive(true);
+                            Image animRenderer = imageAnim.rendererDelegate != null ? imageAnim.rendererDelegate : animGO.GetComponent<Image>();
+                            if (animRenderer != null)
+                            {
+                                animRenderer.DOKill();
+                                Color c = animRenderer.color;
+                                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
+                            }
+                            if (symbolImage != null)
+                            {
+                                symbolImage.DOKill();
+                                symbolImage.DOFade(0f, 0.2f);
+                            }
+
+                            imageAnim.onLoopComplete = (loopCount) =>
+                            {
+                                if (loopCount >= targetLoops)
+                                {
+                                    imageAnim.onLoopComplete = null;
+                                    imageAnim.StopAnimation();
+                                    animGO.SetActive(false);
+
+                                    if (symbolImage != null)
+                                    {
+                                        symbolImage.DOKill();
+                                        symbolImage.DOFade(1f, 0.2f);
+                                    }
+
+                                    completedCount++;
+                                    if (completedCount >= activeUSpinAnims.Count)
+                                    {
+                                        onComplete?.Invoke();
+                                    }
+                                }
+                            };
+
+                            imageAnim.StartAnimation();
+                        }
+                    }
                 }
             }
+        }
+
+        if (activeUSpinAnims.Count == 0)
+        {
+            onComplete?.Invoke();
         }
     }
 
@@ -727,8 +797,6 @@ public class SlotView : MonoBehaviour
         if (animSprites == null || animSprites.Count == 0) return;
 
         imageAnim.textureArray = animSprites;
-        imageAnim.useDynamicFramerate = true;
-        imageAnim.dynamicLoopDuration = winSymbolLoopDuration;
 
         Color originalColor = new Color(symbolImage.color.r, symbolImage.color.g, symbolImage.color.b, 1f);
 
@@ -741,8 +809,7 @@ public class SlotView : MonoBehaviour
             {
                 animRenderer.DOKill();
                 Color c = animRenderer.color;
-                animRenderer.color = new Color(c.r, c.g, c.b, 0f);
-                animRenderer.DOFade(1f, 0.2f);
+                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
             }
             symbolImage.DOKill();
             symbolImage.DOFade(0f, 0.2f);
@@ -758,16 +825,12 @@ public class SlotView : MonoBehaviour
             if (animRenderer != null)
             {
                 animRenderer.DOKill();
-                animRenderer.DOFade(0f, 0.2f).OnComplete(() => {
-                    if (imageAnim != null) imageAnim.StopAnimation();
-                    if (animGO != null) animGO.SetActive(false);
-                });
+                Color c = animRenderer.color;
+                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
             }
-            else
-            {
-                if (imageAnim != null) imageAnim.StopAnimation();
-                if (animGO != null) animGO.SetActive(false);
-            }
+
+            if (imageAnim != null) imageAnim.StopAnimation();
+            if (animGO != null) animGO.SetActive(false);
 
             if (symbolImage != null)
             {
@@ -982,8 +1045,6 @@ public class SlotView : MonoBehaviour
 
         // Set the sprite array on the ImageAnimation component
         imageAnim.textureArray = animSprites;
-        imageAnim.useDynamicFramerate = true;
-        imageAnim.dynamicLoopDuration = winSymbolLoopDuration;
 
         Color originalColor = new Color(symbolImage.color.r, symbolImage.color.g, symbolImage.color.b, 1f);
 
@@ -996,8 +1057,7 @@ public class SlotView : MonoBehaviour
             {
                 animRenderer.DOKill();
                 Color c = animRenderer.color;
-                animRenderer.color = new Color(c.r, c.g, c.b, 0f);
-                animRenderer.DOFade(1f, 0.2f);
+                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
             }
             symbolImage.DOKill();
             symbolImage.DOFade(0f, 0.2f);
@@ -1021,16 +1081,12 @@ public class SlotView : MonoBehaviour
             if (animRenderer != null)
             {
                 animRenderer.DOKill();
-                animRenderer.DOFade(0f, 0.2f).OnComplete(() => {
-                    if (imageAnim != null) imageAnim.StopAnimation();
-                    if (animGO != null) animGO.SetActive(false);
-                });
+                Color c = animRenderer.color;
+                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
             }
-            else
-            {
-                if (imageAnim != null) imageAnim.StopAnimation();
-                if (animGO != null) animGO.SetActive(false);
-            }
+
+            if (imageAnim != null) imageAnim.StopAnimation();
+            if (animGO != null) animGO.SetActive(false);
 
             if (symbolImage != null)
             {
@@ -1071,7 +1127,12 @@ public class SlotView : MonoBehaviour
                             ImageAnimation imageAnim = animGO.GetComponent<ImageAnimation>();
                             if (imageAnim != null)
                             {
-                                if (imageAnim.rendererDelegate != null) imageAnim.rendererDelegate.DOKill();
+                                if (imageAnim.rendererDelegate != null)
+                                {
+                                    imageAnim.rendererDelegate.DOKill();
+                                    Color ac = imageAnim.rendererDelegate.color;
+                                    imageAnim.rendererDelegate.color = new Color(ac.r, ac.g, ac.b, 1f);
+                                }
                                 imageAnim.StopAnimation();
                             }
                             animGO.SetActive(false);

@@ -30,6 +30,7 @@ public class SocketIOManager : MonoBehaviour
     internal bool isConnected;
     internal bool isInitialized;
     internal bool isExiting;   // True when CloseSocket is called intentionally (exit button)
+    private bool isDestroyed;  // True when scene is unloading or application is quitting
 
     private Coroutine pingCoroutine;
     private float lastPongTime;
@@ -46,6 +47,7 @@ public class SocketIOManager : MonoBehaviour
         isInitialized = false;
         isConnected = false;
         isExiting = false;
+        isDestroyed = false;
     }
 
     private void Start()
@@ -154,6 +156,12 @@ public class SocketIOManager : MonoBehaviour
 
         isConnected = false;
         StopPingRoutine();
+
+        if (isDestroyed)
+        {
+            // Do not execute UI transitions or popup animations when destroying object / shutting down scene
+            return;
+        }
 
         if (isExiting)
         {
@@ -433,6 +441,8 @@ public class SocketIOManager : MonoBehaviour
 
     internal void CloseSocket()
     {
+        if (isDestroyed) return;
+
         // Mark as intentional exit BEFORE closing so OnSocketDisconnected shows
         // the loading popup (with its animation) instead of the disconnect popup.
         isExiting = true;
@@ -469,9 +479,22 @@ public class SocketIOManager : MonoBehaviour
         StopPingRoutine();
     }
 
+    private void OnApplicationQuit()
+    {
+        isDestroyed = true;
+    }
+
     private void OnDestroy()
     {
-        CloseSocket();
+        isDestroyed = true;
+        StopPingRoutine();
+
+        if (socketManager != null)
+        {
+            socketManager.Close();
+            socketManager = null;
+        }
+        isConnected = false;
     }
 
     #endregion

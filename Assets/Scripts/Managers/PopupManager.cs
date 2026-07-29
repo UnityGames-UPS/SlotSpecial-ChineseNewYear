@@ -646,10 +646,10 @@ public class PopupManager : MonoBehaviour
             StopCoroutine(autoCloseCoroutine);
         }
 
-        DOTween.Kill(disconnectionPopupRect);
-        DOTween.Kill(errorPopupRect);
-        DOTween.Kill(reconnectionPopupRect);
-        DOTween.Kill(loadingPopupRect);
+        if (disconnectionPopupRect != null) DOTween.Kill(disconnectionPopupRect);
+        if (errorPopupRect != null) DOTween.Kill(errorPopupRect);
+        if (reconnectionPopupRect != null) DOTween.Kill(reconnectionPopupRect);
+        if (loadingPopupRect != null) DOTween.Kill(loadingPopupRect);
     }
 
     #endregion

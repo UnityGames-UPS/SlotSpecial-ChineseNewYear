@@ -20,6 +20,7 @@ public class ServerGameData
 {
     public List<List<int>> lines;
     public List<double> bets;
+    public double creditDivisor = 25;
     public int totalLines;
 }
 
@@ -96,9 +97,11 @@ public class ServerSymbolInfo
     public int id;
     public string name;
     public List<double> multiplier; // Keep for fallback compatibility
-    public double payout;
+    public List<double> payout;
     public string description;
+    public int minMatch;
 }
+
 
 [Serializable]
 public class ServerPlayer
@@ -252,6 +255,7 @@ public class GameConfig
     public int scatterSymbolId = 11;   // USpin is ID 11
 
     public int betMultiplier = 1;      // CNY is cash-bet based, multiplier default is 1
+    public double creditDivisor = 25;  // Credit divisor sent in initData
     public int maxWinMultiplier = 10000;
     public int minWinMultiplier = 10;
     public int initialFreeSpins = 12;
@@ -270,6 +274,7 @@ public class SymbolInfo
     public bool isWild;
     public bool isScatter;
     public int wildMultiplier = 1;
+    public int minMatch;
 }
 
 #endregion
@@ -298,6 +303,7 @@ public class SpinResult
     // Server-authoritative free spin state
     public int serverSpinsRemaining;
     public int serverSpinsUsed;
+    public int serverTotalSpins;
     public double serverTotalRoundWin;
     public bool isRoundOver;
     
@@ -395,6 +401,15 @@ public enum SpinSpeed
     QuickSpin
 }
 
+public enum WinPopupType
+{
+    RegularWin,         // Normal credit win (multiplier < 5x)
+    BigWin,             // Big win (multiplier >= 5x)
+    FreeSpinTrigger,    // Free spins awarded from wheel
+    MoneyBagCollect,    // Money bag feature collect
+    FreeSpinComplete    // All free spins completed
+}
+
 #endregion
 
 #region Helper Classes for Conversion
@@ -414,6 +429,7 @@ public static class InitDataConverter
             paylineCount = serverData.gameData.totalLines,
             paylines = serverData.gameData.lines,
             availableBets = serverData.gameData.bets,
+            creditDivisor = (serverData.gameData != null && serverData.gameData.creditDivisor > 0) ? serverData.gameData.creditDivisor : 25,
             symbols = new List<SymbolInfo>()
         };
 
@@ -427,60 +443,18 @@ public static class InitDataConverter
                 isWild = serverSymbol.name.ToLower().Contains("wild"),
                 isScatter = serverSymbol.name.ToLower().Contains("scatter") || 
                             serverSymbol.name.ToLower().Contains("uspin") || 
-                            serverSymbol.name.ToLower().Contains("moneybag")
+                            serverSymbol.name.ToLower().Contains("moneybag"),
+                minMatch = serverSymbol.minMatch
             };
 
-            // Calculate multipliers from payout
-            double baseBetCredits = 25.0; // 0.25 cash bet corresponds to 25 credits
-            double m5 = serverSymbol.payout / baseBetCredits;
-            double m4 = m5 * 0.33; // 4 matches is ~1/3 of 5 matches
-            double m3 = m5 * 0.067; // 3 matches is ~1/15 of 5 matches
-
-            // Adjust for specific symbols
-            if (serverSymbol.name.ToLower().Contains("ten") || serverSymbol.name.ToLower().Contains("nine"))
+            // Store raw payout values for info page
+            if (serverSymbol.payout != null)
             {
-                m5 = 30.0 / baseBetCredits;  // 1.2
-                m4 = 10.0 / baseBetCredits;  // 0.4
-                m3 = 2.0 / baseBetCredits;   // 0.08
+                for (int i = serverSymbol.payout.Count - 1; i >= 0; i--)
+                {
+                    symbolInfo.multipliers.Add(serverSymbol.payout[i]);
+                }
             }
-            else if (serverSymbol.name.ToLower().Contains("j") || serverSymbol.name.ToLower().Contains("q"))
-            {
-                m5 = 40.0 / baseBetCredits;  // 1.6
-                m4 = 12.0 / baseBetCredits;  // 0.48
-                m3 = 3.0 / baseBetCredits;   // 0.12
-            }
-            else if (serverSymbol.name.ToLower().Contains("k") || serverSymbol.name.ToLower().Contains("a"))
-            {
-                m5 = 50.0 / baseBetCredits;  // 2.0
-                m4 = 15.0 / baseBetCredits;  // 0.6
-                m3 = 4.0 / baseBetCredits;   // 0.16
-            }
-            else if (serverSymbol.name.ToLower().Contains("coin"))
-            {
-                m5 = 100.0 / baseBetCredits; // 4.0
-                m4 = 30.0 / baseBetCredits;  // 1.2
-                m3 = 6.0 / baseBetCredits;   // 0.24
-            }
-            else if (serverSymbol.name.ToLower().Contains("moneypouch"))
-            {
-                m5 = 125.0 / baseBetCredits; // 5.0
-                m4 = 40.0 / baseBetCredits;  // 1.6
-                m3 = 8.0 / baseBetCredits;   // 0.32
-            }
-            else if (serverSymbol.name.ToLower().Contains("hammer"))
-            {
-                m5 = 150.0 / baseBetCredits; // 6.0
-                m4 = 50.0 / baseBetCredits;  // 2.0
-                m3 = 10.0 / baseBetCredits;  // 0.4
-            }
-            else if (serverSymbol.name.ToLower().Contains("lantern"))
-            {
-                m5 = 250.0 / baseBetCredits; // 10.0
-                m4 = 80.0 / baseBetCredits;  // 3.2
-                m3 = 15.0 / baseBetCredits;  // 0.6
-            }
-
-            symbolInfo.multipliers = new List<double> { m5, m4, m3 };
             config.symbols.Add(symbolInfo);
 
             if (symbolInfo.isWild)
@@ -528,10 +502,12 @@ public static class InitDataConverter
     internal static SpinResult ConvertServerResponseToSpinResult(ServerSpinResponse serverResponse, double currentBalance, double betAmount, GameConfig gameConfig)
     {
         double winAmountVal = serverResponse.payload.winAmount > 0 ? serverResponse.payload.winAmount : serverResponse.payload.totalWin;
-        double newBalance = serverResponse.player?.balance ?? CalculateNewBalance(currentBalance, betAmount, winAmountVal);
+        double totalPay = (gameConfig != null && gameConfig.creditDivisor > 0) ? betAmount * gameConfig.creditDivisor : betAmount * 25;
+        double newBalance = serverResponse.player?.balance ?? CalculateNewBalance(currentBalance, totalPay, winAmountVal);
 
         int spinsRemaining = 0;
         int spinsUsed = 0;
+        int totalSpins = 0;
         double totalRoundWin = 0;
         bool isRoundOver = false;
 
@@ -539,6 +515,7 @@ public static class InitDataConverter
         {
             spinsRemaining = serverResponse.payload.freeGames.totalAwarded - serverResponse.payload.freeGames.played;
             spinsUsed = serverResponse.payload.freeGames.played;
+            totalSpins = serverResponse.payload.freeGames.totalAwarded;
             totalRoundWin = serverResponse.payload.freeGames.totalFreeGamesWin;
             isRoundOver = serverResponse.payload.freeGames.played >= serverResponse.payload.freeGames.totalAwarded && serverResponse.payload.freeGames.totalAwarded > 0;
         }
@@ -584,6 +561,7 @@ public static class InitDataConverter
 
             serverSpinsRemaining = spinsRemaining,
             serverSpinsUsed = spinsUsed,
+            serverTotalSpins = totalSpins,
             serverTotalRoundWin = totalRoundWin,
             isRoundOver = isRoundOver,
             
@@ -703,9 +681,9 @@ public static class InitDataConverter
         return winLines;
     }
 
-    private static double CalculateNewBalance(double currentBalance, double betAmount, double winAmount)
+    private static double CalculateNewBalance(double currentBalance, double totalPay, double winAmount)
     {
-        return currentBalance - betAmount + winAmount;
+        return currentBalance - totalPay + winAmount;
     }
 }
 

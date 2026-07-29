@@ -115,8 +115,8 @@ public class GameManager : MonoBehaviour
         if (currentState != GameState.Idle) return;
         if (!socketManager.isConnected) return;
 
-        double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-        if (!isInFreeSpins && playerData.balance < totalBet)
+        double totalPay = GetTotalPay();
+        if (!isInFreeSpins && playerData.balance < totalPay)
         {
             if (popupManager != null)
             {
@@ -222,28 +222,10 @@ public class GameManager : MonoBehaviour
 
     private void OnReelsStoppedComplete()
     {
-        if (lastResult != null && lastResult.uSpinData != null && lastResult.uSpinData.triggered)
-        {
-            StartCoroutine(DelayUSpinTriggerResult());
-            return;
-        }
-
-        if (lastResult != null && lastResult.moneyBagData != null && lastResult.moneyBagData.triggered)
-        {
-            StartCoroutine(DelayMoneyBagTriggerResult());
-            return;
-        }
-
-        if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered && !isInFreeSpins)
-        {
-            StartCoroutine(DelayScatterTriggerResult());
-            return;
-        }
-
         if (lastResult.winAmount > 0 && lastResult.winLines != null && lastResult.winLines.Count > 0)
         {
-            double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-            double multiplier = totalBet > 0 ? (lastResult.winAmount / totalBet) : 0;
+            double totalPay = GetTotalPay();
+            double multiplier = totalPay > 0 ? (lastResult.winAmount / totalPay) : 0;
 
             if (multiplier >= 5)
             {
@@ -272,8 +254,8 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator TriggerWinPopupWithDelay(float delay, SpinResult result)
     {
-        double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-        double multiplier = totalBet > 0 ? (result.winAmount / totalBet) : 0;
+        double totalPay = GetTotalPay();
+        double multiplier = totalPay > 0 ? (result.winAmount / totalPay) : 0;
         if (multiplier >= 5)
         {
             waitingForSpecialWin = true;
@@ -287,7 +269,7 @@ public class GameManager : MonoBehaviour
 
         if (lastResult == result)
         {
-            uiManager.TriggerBigWinPopupEarly(result, () =>
+            uiManager.TriggerBigWinPopup(result, () =>
             {
                 waitingForSpecialWin = false;
             });
@@ -302,8 +284,8 @@ public class GameManager : MonoBehaviour
     {
         if (lastResult != null)
         {
-            double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-            double multiplier = totalBet > 0 ? (lastResult.winAmount / totalBet) : 0;
+            double totalPay = GetTotalPay();
+            double multiplier = totalPay > 0 ? (lastResult.winAmount / totalPay) : 0;
 
             // Only update UI here if it wasn't already updated in OnReelsStoppedComplete (multiplier < 5)
             if (multiplier >= 5)
@@ -312,6 +294,40 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        StartCoroutine(ProcessSpecialFeaturesAfterWin());
+    }
+
+    private IEnumerator ProcessSpecialFeaturesAfterWin()
+    {
+        // Wait for special win popup to finish before starting special features
+        while (waitingForSpecialWin || uiManager.IsSpecialWinActive)
+        {
+            yield return null;
+        }
+
+        if (lastResult != null && lastResult.uSpinData != null && lastResult.uSpinData.triggered)
+        {
+            yield return StartCoroutine(DelayUSpinTriggerResult());
+            yield break;
+        }
+
+        if (lastResult != null && lastResult.moneyBagData != null && lastResult.moneyBagData.triggered)
+        {
+            yield return StartCoroutine(DelayMoneyBagTriggerResult());
+            yield break;
+        }
+
+        if (lastResult != null && lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered && !isInFreeSpins)
+        {
+            yield return StartCoroutine(DelayScatterTriggerResult());
+            yield break;
+        }
+
+        ResumeAfterSpecialFeature();
+    }
+
+    private void ResumeAfterSpecialFeature()
+    {
         if (isAutoPlaying || isInFreeSpins)
         {
             StartCoroutine(DelayBeforeNextRound());
@@ -340,17 +356,25 @@ public class GameManager : MonoBehaviour
     {
         AudioManager.Instance?.Play3ScatterHit();
 
+        bool animFinished = false;
         if (slotView != null)
         {
-            slotView.AnimateUSpinWin();
+            slotView.AnimateUSpinWin(() =>
+            {
+                animFinished = true;
+            });
+        }
+        else
+        {
+            animFinished = true;
         }
 
-        yield return new WaitForSeconds(3.5f);
+        yield return new WaitUntil(() => animFinished);
 
         uiManager.TriggerUSpinBonus(lastResult.uSpinData, () =>
         {
             lastResult.uSpinData.triggered = false;
-            OnReelsStoppedComplete();
+            ResumeAfterSpecialFeature();
         });
     }
 
@@ -368,7 +392,7 @@ public class GameManager : MonoBehaviour
         uiManager.TriggerMoneyBagBonus(lastResult.moneyBagData, () =>
         {
             lastResult.moneyBagData.triggered = false;
-            OnReelsStoppedComplete();
+            ResumeAfterSpecialFeature();
         });
     }
 
@@ -402,11 +426,21 @@ public class GameManager : MonoBehaviour
         lastResult = result;
 
         // CRITICAL FIX: Update free spin counter IMMEDIATELY when server response arrives
-        // This ensures the display shows the exact server-authoritative count without lag
+        // This ensures the display shows the exact server-authoritative played count without lag
         if (isInFreeSpins && result.serverSpinsRemaining >= 0)
         {
             freeSpinsRemaining = result.serverSpinsRemaining;
-            uiManager.UpdateFreeSpinCount(freeSpinsRemaining);
+            freeSpinsUsed = result.serverSpinsUsed;
+            int displayTotalSpins = result.serverTotalSpins;
+
+            if (result.uSpinData != null && result.uSpinData.triggered && result.uSpinData.freeGamesAwarded > 0)
+            {
+                // Defer adding the newly won free spins to total count until wheel spin completes and user presses Take!
+                displayTotalSpins -= result.uSpinData.freeGamesAwarded;
+                freeSpinsRemaining -= result.uSpinData.freeGamesAwarded;
+            }
+
+            uiManager.UpdateFreeSpinCount(freeSpinsUsed, displayTotalSpins);
         }
 
         if (result.winLines != null)
@@ -439,8 +473,8 @@ public class GameManager : MonoBehaviour
         }
 
 
-        // Check if free spins were just triggered (initial trigger)
-        if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered)
+        // Check if free spins were just triggered (initial trigger from base game)
+        if (lastResult.freeSpinData != null && lastResult.freeSpinData.isTriggered && !isInFreeSpins)
         {
             StartFreeSpins(lastResult.freeSpinData.spinsAwarded);
             lastResult = null;
@@ -467,8 +501,8 @@ public class GameManager : MonoBehaviour
             {
                 // Before requesting the next spin, verify the player can still afford it.
                 // If not, stop autoplay (restores all UI) then show the popup.
-                double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-                if (playerData.balance < totalBet)
+                double totalPay = GetTotalPay();
+                if (playerData.balance < totalPay)
                 {
                     currentState = GameState.Idle;
                     StopAutoPlay();
@@ -523,8 +557,8 @@ public class GameManager : MonoBehaviour
         if (currentState != GameState.Idle) return;
 
         // Check balance BEFORE locking any UI — if insufficient, show popup and bail.
-        double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-        if (playerData.balance < totalBet)
+        double totalPay = GetTotalPay();
+        if (playerData.balance < totalPay)
         {
             if (popupManager != null) popupManager.ShowInsufficientFundsError();
             return;
@@ -636,10 +670,16 @@ public class GameManager : MonoBehaviour
 
     #region Helper Methods
 
+    internal double GetTotalPay()
+    {
+        double divisor = (gameConfig != null && gameConfig.creditDivisor > 0) ? gameConfig.creditDivisor : 25;
+        return currentBetAmount * divisor;
+    }
+
     internal bool CanAffordBet()
     {
-        double totalBet = currentBetAmount * (gameConfig != null ? gameConfig.betMultiplier : 1);
-        return playerData.balance >= totalBet;
+        double totalPay = GetTotalPay();
+        return playerData.balance >= totalPay;
     }
 
     internal bool IsSpinning()

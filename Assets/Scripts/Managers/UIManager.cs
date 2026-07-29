@@ -38,24 +38,19 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button wheelSpinButton;
     [SerializeField] private CanvasGroup transitionBackFilm;
     
-    [Header("Wheel Result Popup")]
-    [SerializeField] private GameObject wheelWinPopup;
-    [SerializeField] private TMP_Text wheelWinAmountText;
-
     [Header("Money Bag Bonus")]
     [SerializeField] private MoneyBagController moneyBagController;
 
-    [Header("Win Popup Panel")]
-    [SerializeField] private GameObject winPopupPanel;
-    [SerializeField] private GameObject winRingObject;
-    [SerializeField] private ImageAnimation winPopupImageAnimation;
-    [SerializeField] private RectTransform winPopupImageRect;
-    [SerializeField] private TMP_Text winPopupText;
-    [SerializeField] private List<Sprite> niceWinSprites;
-    [SerializeField] private List<Sprite> bigWinSprites;
-    [SerializeField] private List<Sprite> megaWinSprites;
-    [SerializeField] private List<Sprite> superWinSprites;
-    [SerializeField] private List<Sprite> ultimateWinSprites;
+    [Header("Universal Win Popup")]
+    [SerializeField] private GameObject universalWinPopup;
+    [SerializeField] private RectTransform universalWinPopupRect;
+    [SerializeField] private GameObject uwpCongratulationsTitle;
+    [SerializeField] private GameObject uwpYouWonSubtitle;
+    [SerializeField] private GameObject uwpBigWinTitle;
+    [SerializeField] private TMP_Text uwpWinAmountText;
+    [SerializeField] private TMP_Text uwpFreeSpinCountText;
+    [SerializeField] private GameObject uwpFreeSpinObject;
+    [SerializeField] private Button uwpTakeButton;
 
     [Header("Spin Button")]
     [SerializeField] private Button spinButton;
@@ -102,6 +97,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button gameRulesBackButton;
 
     [Header("Game Rules Dynamic Texts")]
+    [SerializeField] private TMP_Text totalLineCountText;
     [SerializeField] private TMP_Text ruleSymbol0Text;
     [SerializeField] private TMP_Text ruleSymbol1Text;
     [SerializeField] private TMP_Text ruleSymbol2Text;
@@ -118,16 +114,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text remainingFreeSpinsText;
 
 
-
-    [Header("Animation Settings")]
-    [SerializeField] private float winCountDuration = 0.25f;
-    [Header("Popup Settings")]
-    [SerializeField] private float balanceCountDuration = 1.0f;
-    [SerializeField] private float popupAppearY = 555f;
-    [SerializeField] private float popupFinalY = 165f;
-    [SerializeField] private float popupDropDuration = 0.8f;
-
-    private Coroutine winDisplayCoroutine;
 
     [Header("Expand-Shrink Controls")]
     [SerializeField] private Button expandButton;
@@ -157,6 +143,11 @@ public class UIManager : MonoBehaviour
     private bool isSpecialWinActive = false;
     public bool IsSpecialWinActive => isSpecialWinActive;
     public System.Action OnSpecialWinComplete;
+
+    // Universal Win Popup state
+    private System.Action universalWinPopupCallback;
+    private Coroutine uwpAutoCloseCoroutine;
+    [SerializeField] private float uwpAutoCloseDelay = 3f;
 
     private void Start()
     {
@@ -192,12 +183,10 @@ public class UIManager : MonoBehaviour
 
         if (settingsPanel) settingsPanel.SetActive(false);
         if (gameRulesPanel) gameRulesPanel.SetActive(false);
-        if (winPopupPanel) winPopupPanel.SetActive(false);
-        if (winRingObject) winRingObject.SetActive(false);
+        if (universalWinPopup) universalWinPopup.SetActive(false);
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
         if (wheelScreen) wheelScreen.SetActive(false);
-        if (wheelWinPopup) wheelWinPopup.SetActive(false);
         if (transitionBackFilm) transitionBackFilm.gameObject.SetActive(false);
     }
 
@@ -275,6 +264,9 @@ public class UIManager : MonoBehaviour
         if (shrinkButton) shrinkButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
 
         if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
+
+        // Take button for universal win popup
+        if (uwpTakeButton) uwpTakeButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); CloseUniversalWinPopup(); });
 
         // Speed buttons setup (Three-layer Toggle)
         if (normalSpeedButton) normalSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
@@ -361,33 +353,21 @@ public class UIManager : MonoBehaviour
         SetBetControlsEnabled(false);
         if (settingsOpenButton) settingsOpenButton.interactable = false;
 
-        // Stop win popup BG loop if a new spin starts while popup is still showing
-        AudioManager.Instance?.StopWinPopupBg();
-
-        if (winDisplayCoroutine != null)
+        // Close universal win popup if still open when a new spin starts
+        if (universalWinPopup && universalWinPopup.activeSelf)
         {
-            StopCoroutine(winDisplayCoroutine);
-            winDisplayCoroutine = null;
+            universalWinPopup.SetActive(false);
+            universalWinPopupCallback = null;
         }
-        if (winPopupPanel)
-        {
-            winPopupPanel.SetActive(false);
-            if (winPopupImageAnimation) winPopupImageAnimation.StopAnimation();
-        }
-        if (winRingObject) winRingObject.SetActive(false);
         isSpecialWinActive = false;
 
         // --- Optimistic balance deduction ---
-        // Immediately deduct total stake from displayed balance so the player
-        // sees the cost before the server responds. The server balance will
-        // overwrite (animate to) the correct value in AnimateBalanceUpdate.
         if (!gameManager.isInFreeSpins && gameManager.gameConfig != null && gameManager.playerData != null)
         {
-            double totalBet = gameManager.currentBetAmount * gameManager.gameConfig.betMultiplier;
-            optimisticBalance = gameManager.playerData.balance - totalBet;
+            double totalPay = gameManager.GetTotalPay();
+            optimisticBalance = gameManager.playerData.balance - totalPay;
             hasOptimisticBalance = true;
 
-            // Kill any previous balance tween and show deducted value immediately
             if (balanceTween != null) balanceTween.Kill();
             if (balanceText != null) balanceText.text = "BALANCE : " + optimisticBalance.ToString("F2");
         }
@@ -395,35 +375,49 @@ public class UIManager : MonoBehaviour
         {
             hasOptimisticBalance = false;
         }
-        // ------------------------------------
 
         // Don't update free spin count here - wait for server result
-        // The count will be updated in ProcessSpinResult with server data
         if (!gameManager.isInFreeSpins)
         {
             UpdateWinDisplay(0);
         }
     }
 
-    private bool earlyBigWinPopupTriggered = false;
-
-    internal void TriggerBigWinPopupEarly(SpinResult result, System.Action onComplete = null)
+    internal void TriggerBigWinPopup(SpinResult result, System.Action onComplete = null)
     {
-        double totalBetAmount = gameManager.currentBetAmount;
-        if (gameManager.gameConfig != null)
-        {
-            totalBetAmount *= gameManager.gameConfig.betMultiplier;
-        }
-        
-        // Always calculate multiplier for popup level based on the current result's winAmount
+        double totalPay = gameManager.GetTotalPay();
         double winAmount = result.winAmount;
-        double multiplier = totalBetAmount > 0 ? (winAmount / totalBetAmount) : 0;
+        double multiplier = totalPay > 0 ? (winAmount / totalPay) : 0;
 
         if (multiplier >= 5)
         {
-            earlyBigWinPopupTriggered = true;
-            if (winDisplayCoroutine != null) StopCoroutine(winDisplayCoroutine);
-            winDisplayCoroutine = StartCoroutine(ShowWinDisplayCoroutine(result, onComplete));
+            // Show Big Win universal popup — static, waits for Take button
+            isSpecialWinActive = true;
+            DisableControlsDuringWinAnimation();
+
+            // Defer pending wheel/bonus credit win from balance/win update until bonus game Take button
+            double pendingBonusWin = 0;
+            if (result != null)
+            {
+                if (result.uSpinData != null && result.uSpinData.triggered && result.uSpinData.winInCash > 0)
+                    pendingBonusWin += result.uSpinData.winInCash;
+                if (result.moneyBagData != null && result.moneyBagData.triggered && result.moneyBagData.winInCash > 0)
+                    pendingBonusWin += result.moneyBagData.winInCash;
+            }
+
+            // Update win display and balance immediately
+            double targetWin = gameManager.isInFreeSpins ? result.serverTotalRoundWin : winAmount;
+            AnimateWinUpdate(System.Math.Max(0, targetWin - pendingBonusWin));
+            AnimateBalanceUpdate(result.playerData.balance - pendingBonusWin);
+
+            ShowUniversalWinPopup(WinPopupType.BigWin, winAmount, 0, () =>
+            {
+                isSpecialWinActive = false;
+                EnableControlsAfterWinAnimation();
+                OnSpinCompleted(null);
+                onComplete?.Invoke();
+                OnSpecialWinComplete?.Invoke();
+            });
         }
         else
         {
@@ -433,40 +427,44 @@ public class UIManager : MonoBehaviour
 
     internal void OnSpinStopping(SpinResult result)
     {
-        // If a special win popup is active, the balance is updated in sync with
-        // the popup counter inside ShowWinDisplayCoroutine — skip it here.
+        // Defer pending wheel/bonus credit win from balance/win update until bonus game Take button
+        double pendingBonusWin = 0;
+        if (result != null)
+        {
+            if (result.uSpinData != null && result.uSpinData.triggered && result.uSpinData.winInCash > 0)
+                pendingBonusWin += result.uSpinData.winInCash;
+            if (result.moneyBagData != null && result.moneyBagData.triggered && result.moneyBagData.winInCash > 0)
+                pendingBonusWin += result.moneyBagData.winInCash;
+        }
+
+        double displayBalance = result.playerData.balance - pendingBonusWin;
+
         if (!isSpecialWinActive)
         {
-            AnimateBalanceUpdate(result.playerData.balance);
+            AnimateBalanceUpdate(displayBalance);
         }
 
         double targetWin = gameManager.isInFreeSpins ? result.serverTotalRoundWin : result.winAmount;
+        double displayWin = System.Math.Max(0, targetWin - pendingBonusWin);
 
         if (result.winAmount > 0)
         {
-            if (!earlyBigWinPopupTriggered)
+            if (!isSpecialWinActive)
             {
-                AnimateWinUpdate(targetWin);
+                AnimateWinUpdate(displayWin);
             }
-            
-            double totalBetAmount = gameManager.currentBetAmount;
-            if (gameManager.gameConfig != null)
-            {
-                totalBetAmount *= gameManager.gameConfig.betMultiplier;
-            }
-            double multiplier = totalBetAmount > 0 ? (result.winAmount / totalBetAmount) : 0;
 
-            if (multiplier < 5 || !earlyBigWinPopupTriggered)
+            double totalPay = gameManager.GetTotalPay();
+            double multiplier = totalPay > 0 ? (result.winAmount / totalPay) : 0;
+
+            if (multiplier < 5)
             {
-                ShowWinDisplay(result);
+                AudioManager.Instance?.PlayWinNormal();
             }
-            earlyBigWinPopupTriggered = false;
         }
         else
         {
-            // Update display to target total (maintains round total in Free Spins)
-            UpdateWinDisplay(targetWin);
-            earlyBigWinPopupTriggered = false;
+            UpdateWinDisplay(displayWin);
         }
     }
 
@@ -496,27 +494,10 @@ public class UIManager : MonoBehaviour
         SetBetControlsEnabled(false);
         if (spinButton)
         {
-            spinButton.gameObject.SetActive(true);
-            spinButton.interactable = false;
+            spinButton.gameObject.SetActive(false);
         }
         if (stopButton) stopButton.gameObject.SetActive(false);
-
-        
-        if (gameManager != null && gameManager.lastResult != null)
-        {
-            double winAmount = gameManager.lastResult.winAmount;
-            double totalBetAmount = gameManager.currentBetAmount;
-            if (gameManager.gameConfig != null)
-            {
-                totalBetAmount *= gameManager.gameConfig.betMultiplier;
-            }
-            double multiplier = totalBetAmount > 0 ? (winAmount / totalBetAmount) : 0;
-            
-            if (multiplier >= 5)
-            {
-                if (winRingObject) winRingObject.SetActive(true);
-            }
-        }
+        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
     }
 
     internal void EnableControlsAfterWinAnimation()
@@ -537,135 +518,6 @@ public class UIManager : MonoBehaviour
             if (settingsOpenButton) settingsOpenButton.interactable = true;
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
         }
-    }
-
-    private void ShowWinDisplay(SpinResult result)
-    {
-        if (winDisplayCoroutine != null) StopCoroutine(winDisplayCoroutine);
-        winDisplayCoroutine = StartCoroutine(ShowWinDisplayCoroutine(result));
-    }
-
-    private IEnumerator ShowWinDisplayCoroutine(SpinResult result, System.Action onComplete = null)
-    {
-        double winAmount = result.winAmount;
-        double totalBetAmount = gameManager.currentBetAmount;
-        if (gameManager.gameConfig != null)
-        {
-            totalBetAmount *= gameManager.gameConfig.betMultiplier;
-        }
-        
-        double multiplier = totalBetAmount > 0 ? (winAmount / totalBetAmount) : 0;
-        // --- Capping Logic ---
-        double startVal = gameManager.isInFreeSpins ? currentWinDisplayValue : 0;
-        double endVal = gameManager.isInFreeSpins ? result.serverTotalRoundWin : winAmount;
-        double popupWinAmount = winAmount;
-
-        if (multiplier < 5)
-        {
-            AudioManager.Instance?.PlayWinNormal();
-            yield return new WaitForSeconds(1f);
-            if (winRingObject) winRingObject.SetActive(false);
-            winDisplayCoroutine = null;
-            yield break;
-        }
-
-        // --- Special Win Triggered ---
-        isSpecialWinActive = true;
-        DisableControlsDuringWinAnimation();
-
-        // Big Win Popup Logic — based on the spin's winAmount field
-        AudioManager.Instance?.PlayWinOpeningJingle(multiplier);
-        AudioManager.Instance?.PlayWinPopupBg(multiplier);
-
-        List<Sprite> selectedSprites = null;
-        float popupTime = 0f;
-
-        if (multiplier >= 100) {
-            selectedSprites = ultimateWinSprites;
-            popupTime = 15f;
-        } else if (multiplier >= 50) {
-            selectedSprites = superWinSprites;
-            popupTime = 12f;
-        } else if (multiplier >= 25) {
-            selectedSprites = megaWinSprites;
-            popupTime = 8f;
-        } else if (multiplier >= 10) {
-            selectedSprites = bigWinSprites;
-            popupTime = 8f;
-        } else {
-            selectedSprites = niceWinSprites;
-            popupTime = 6f;
-        }
-
-        if (winPopupImageAnimation)
-        {
-            winPopupImageAnimation.textureArray = selectedSprites;
-        }
-
-        if (winPopupPanel) winPopupPanel.SetActive(true);
-
-        if (winPopupImageAnimation)
-        {
-            winPopupImageAnimation.StartAnimation();
-        }
-
-        float animDuration = popupTime - 1f;
-
-        if (winPopupImageRect)
-        {
-            winPopupImageRect.localScale = Vector3.zero;
-            winPopupImageRect.DOScale(Vector3.one, 0.5f).SetEase(Ease.OutBack).OnComplete(() => {
-                winPopupImageRect.DOScale(new Vector3(1.2f, 1.2f, 1.2f), animDuration - 0.5f).SetEase(Ease.Linear);
-            });
-        }
-
-        if (winPopupText)
-        {
-            winPopupText.text = "0.00";
-            float currentAnimVal = (float)startVal;
-
-            // Start balance animation in sync with the popup counter so both
-            // count up together and finish at the same time.
-            AnimateBalanceUpdate(result.playerData.balance, animDuration);
-
-            DOTween.To(() => currentAnimVal, x => {
-                currentAnimVal = x;
-                
-                // 1. Calculate progress from startVal to endVal
-                double range = endVal - startVal;
-                float progress = range > 0 ? (float)((currentAnimVal - startVal) / range) : 1f;
-                progress = Mathf.Clamp01(progress);
-
-                // 2. Update popup text based on spin win amount
-                double currentPopupHit = progress * popupWinAmount;
-                winPopupText.text = currentPopupHit.ToString("F2");
-
-                // 3. Update main UI displays based on authoritative round total
-                string formattedTotal = ((double)currentAnimVal).ToString("F2");
-                if (winAmountText) winAmountText.text = formattedTotal;
-                
-                currentWinDisplayValue = (double)currentAnimVal;
-            }, (float)endVal, animDuration).SetEase(Ease.OutQuad);
-        }
-
-        yield return new WaitForSeconds(popupTime);
-
-        // Popup auto-closed — stop the looping BG
-        AudioManager.Instance?.StopWinPopupBg();
-
-        if (winPopupPanel) winPopupPanel.SetActive(false);
-        if (winPopupImageAnimation) winPopupImageAnimation.StopAnimation();
-        if (winRingObject) winRingObject.SetActive(false);
-
-        // --- Reset Controls ---
-        isSpecialWinActive = false;
-        EnableControlsAfterWinAnimation();
-        OnSpinCompleted(null);
-
-        onComplete?.Invoke();
-        OnSpecialWinComplete?.Invoke();
-
-        winDisplayCoroutine = null;
     }
 
     #endregion
@@ -778,10 +630,10 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager.gameConfig == null) return;
 
-        double totalBetAmount = gameManager.currentBetAmount * gameManager.gameConfig.betMultiplier;
+        double totalPay = gameManager.GetTotalPay();
 
         if (betAmountText)
-            betAmountText.text = totalBetAmount.ToString("F2");
+            betAmountText.text = totalPay.ToString("F2");
         UpdateBetButtonStates();
         UpdateGameRulesDynamicTexts();
     }
@@ -1050,7 +902,7 @@ public class UIManager : MonoBehaviour
         if (freeSpinBackground) freeSpinBackground.SetActive(true);
         if (gameLogoObject) gameLogoObject.SetActive(false);
 
-        UpdateFreeSpinCount(spinsAwarded);
+        UpdateFreeSpinCount(0, spinsAwarded);
         gameManager.StartFirstFreeSpin();
     }
 
@@ -1060,28 +912,30 @@ public class UIManager : MonoBehaviour
         initialFreeSpins = 0;
         totalFreeSpinsAwarded = 0;
 
-        if (freeSpinBackground) freeSpinBackground.SetActive(false);
-        if (normalSpinBackground) normalSpinBackground.SetActive(true);
-        if (gameLogoObject) gameLogoObject.SetActive(true);
-
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
 
-        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-        if (settingsOpenButton)    settingsOpenButton.interactable    = true;
-        SetBetControlsEnabled(true);
+        // Show Free Spin Complete popup before switching backgrounds
+        ShowUniversalWinPopup(WinPopupType.FreeSpinComplete, serverTotalRoundWin, 0, () =>
+        {
+            if (freeSpinBackground) freeSpinBackground.SetActive(false);
+            if (normalSpinBackground) normalSpinBackground.SetActive(true);
+            if (gameLogoObject) gameLogoObject.SetActive(true);
+
+            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+            if (settingsOpenButton) settingsOpenButton.interactable = true;
+            SetBetControlsEnabled(true);
+        });
     }
 
-    internal void UpdateFreeSpinCount(int remainingSpins)
+    internal void UpdateFreeSpinCount(int playedSpins, int totalSpins = -1)
     {
-        if (remainingSpins > 0)
+        if (totalSpins > 0)
         {
-            if (freeSpinCountContainer) freeSpinCountContainer.SetActive(true);
-            if (remainingFreeSpinsText) remainingFreeSpinsText.text = $"FREE GAME  {remainingSpins}  OF  {totalFreeSpinsAwarded}";
+            totalFreeSpinsAwarded = totalSpins;
         }
-        else
-        {
-            if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
-        }
+
+        if (freeSpinCountContainer) freeSpinCountContainer.SetActive(true);
+        if (remainingFreeSpinsText) remainingFreeSpinsText.text = $"FREE GAME  {playedSpins}  OF  {totalFreeSpinsAwarded}";
     }
     #endregion
     #region Expand / Shrink
@@ -1225,6 +1079,11 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager.gameConfig == null) return;
 
+        if (totalLineCountText != null)
+        {
+            totalLineCountText.text = gameManager.gameConfig.paylineCount.ToString();
+        }
+
         // "5 - (currentbetamout*thatmultiper ) \n 4 - (currentbetamout*thatmultiper ) \n 3 - (currentbetamout*multiper )"
         TMP_Text[] symbolTexts = {
             ruleSymbol0Text, ruleSymbol1Text, ruleSymbol2Text, ruleSymbol3Text,
@@ -1240,20 +1099,23 @@ public class UIManager : MonoBehaviour
 
                 // Find symbol by id
                 var symbol = gameManager.gameConfig.symbols.Find(s => s.id == i);
-                if (symbol != null && symbol.multipliers != null && symbol.multipliers.Count >= 3)
+                if (symbol != null && symbol.multipliers != null && symbol.multipliers.Count > 0)
                 {
-                    // multipliers list: index 0 is 5 matches, index 1 is 4 matches, index 2 is 3 matches
                     double originalBetAmount = gameManager.currentBetAmount;
-                    double win5 = originalBetAmount * symbol.multipliers[0];
-                    double win4 = originalBetAmount * symbol.multipliers[1];
-                    double win3 = originalBetAmount * symbol.multipliers[2];
-
-                    // Format nicely, e.g., F2 if decimal, or just let ToString format it based on game's styling
-                    string text5 = $"5 - {win5.ToString("0.##")}";
-                    string text4 = $"4 - {win4.ToString("0.##")}";
-                    string text3 = $"3 - {win3.ToString("0.##")}";
-
-                    symbolTexts[i].text = $"{text5}\n{text4}\n{text3}";
+                    string fullText = "";
+                    
+                    int currentMatch = 5;
+                    for (int m = 0; m < symbol.multipliers.Count; m++)
+                    {
+                        double win = symbol.multipliers[m];
+                        string line = $"{currentMatch} - {win.ToString("0.##")}";
+                        if (m == 0) fullText = line;
+                        else fullText += $"\n{line}";
+                        
+                        currentMatch--;
+                    }
+                    
+                    symbolTexts[i].text = fullText;
                 }
             }
         }
@@ -1307,16 +1169,16 @@ public class UIManager : MonoBehaviour
             transitionBackFilm.gameObject.SetActive(true);
             transitionBackFilm.alpha = 0f;
             yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
-            yield return new WaitForSeconds(0.5f); // Hold for 0.5s at peak
+            yield return new WaitForSeconds(0.5f);
         }
         
         // 2. Open spin wheel screen
         if (wheelScreen) wheelScreen.SetActive(true);
-        if (wheelWinPopup) wheelWinPopup.SetActive(false);
         
         // Hide normal spin/stop buttons, show wheel spin button
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
         if (spinButton) spinButton.gameObject.SetActive(false);
+        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
         if (wheelSpinButton) 
         {
             wheelSpinButton.gameObject.SetActive(true);
@@ -1346,12 +1208,28 @@ public class UIManager : MonoBehaviour
             mainSpinDone = true;
         }
         yield return new WaitUntil(() => mainSpinDone);
-        yield return new WaitForSeconds(0.5f); // Brief pause after stop
+        yield return new WaitForSeconds(0.5f);
 
         // 6. Handle the two possibilities
         if (resultData.type == "FREE_GAMES")
         {
-            // Transition back immediately for Free Games
+            // Show Free Spin Trigger popup on the wheel screen
+            bool takePressed = false;
+            ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
+            {
+                takePressed = true;
+            });
+            yield return new WaitUntil(() => takePressed);
+
+            // Update free spin count and total spins ONLY AFTER user presses Take button!
+            if (gameManager != null && gameManager.isInFreeSpins)
+            {
+                gameManager.freeSpinsRemaining += resultData.freeGamesAwarded;
+                int updatedTotalSpins = totalFreeSpinsAwarded + resultData.freeGamesAwarded;
+                UpdateFreeSpinCount(gameManager.freeSpinsUsed, updatedTotalSpins);
+            }
+
+            // Transition back
             if (transitionBackFilm != null)
             {
                 transitionBackFilm.gameObject.SetActive(true);
@@ -1370,15 +1248,21 @@ public class UIManager : MonoBehaviour
         }
         else // MULTIPLIER / CREDITS
         {
-            // Show wheel win popup
-            if (wheelWinPopup) wheelWinPopup.SetActive(true);
-            if (wheelWinAmountText)
+            // Show credits win via universal popup with Take button
+            bool takePressed = false;
+            ShowUniversalWinPopup(WinPopupType.RegularWin, resultData.winInCash, 0, () =>
             {
-                wheelWinAmountText.text = $"{resultData.winInCash:F2}";
+                takePressed = true;
+            });
+            yield return new WaitUntil(() => takePressed);
+
+            // Update credit balance and win display ONLY AFTER user presses Take button!
+            if (gameManager != null && gameManager.lastResult != null)
+            {
+                double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
+                AnimateWinUpdate(targetWin);
+                AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
             }
-            
-            // Wait a bit to let the player read the popup
-            yield return new WaitForSeconds(2.5f);
             
             // Transition back
             if (transitionBackFilm != null)
@@ -1389,7 +1273,6 @@ public class UIManager : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
             
-            if (wheelWinPopup) wheelWinPopup.SetActive(false);
             if (wheelScreen) wheelScreen.SetActive(false);
             
             if (transitionBackFilm != null)
@@ -1403,7 +1286,6 @@ public class UIManager : MonoBehaviour
 
         // Restore normal spin button state before completing
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-        if (spinButton) spinButton.gameObject.SetActive(true);
 
         onComplete?.Invoke();
     }
@@ -1421,12 +1303,13 @@ public class UIManager : MonoBehaviour
             transitionBackFilm.gameObject.SetActive(true);
             transitionBackFilm.alpha = 0f;
             yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
-            yield return new WaitForSeconds(0.5f); // Hold for 0.5s at peak
+            yield return new WaitForSeconds(0.5f);
         }
         
         // Hide normal spin/stop buttons
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
         if (spinButton) spinButton.gameObject.SetActive(false);
+        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
 
         bool moneyBagDone = false;
         
@@ -1445,8 +1328,21 @@ public class UIManager : MonoBehaviour
 
             yield return new WaitUntil(() => moneyBagDone);
 
-            // Wait a bit to let the player read the result
-            yield return new WaitForSeconds(1.0f);
+            // Show Money Bag Collect popup with Take button
+            bool takePressed = false;
+            ShowUniversalWinPopup(WinPopupType.MoneyBagCollect, resultData.winInCash, 0, () =>
+            {
+                takePressed = true;
+            });
+            yield return new WaitUntil(() => takePressed);
+
+            // Update credit balance and win display ONLY AFTER user presses Take button!
+            if (gameManager != null && gameManager.lastResult != null)
+            {
+                double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
+                AnimateWinUpdate(targetWin);
+                AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
+            }
             
             // Transition back
             if (transitionBackFilm != null)
@@ -1471,9 +1367,184 @@ public class UIManager : MonoBehaviour
 
         // Restore normal spin button state before completing
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-        if (spinButton) spinButton.gameObject.SetActive(true);
 
         onComplete?.Invoke();
+    }
+
+    #endregion
+
+    #region Universal Win Popup
+
+    /// <summary>
+    /// Shows the universal win popup configured for the given type.
+    /// The popup remains open until the player presses the Take button.
+    /// </summary>
+    internal void ShowUniversalWinPopup(WinPopupType type, double winAmount, int freeSpinCount = 0, System.Action onTakePressed = null)
+    {
+        if (universalWinPopup == null) return;
+
+        universalWinPopupCallback = onTakePressed;
+
+        // Hide all optional elements first
+        if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(false);
+        if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(false);
+        if (uwpBigWinTitle) uwpBigWinTitle.SetActive(false);
+        if (uwpWinAmountText) uwpWinAmountText.gameObject.SetActive(false);
+        if (uwpFreeSpinCountText) uwpFreeSpinCountText.gameObject.SetActive(false);
+        if (uwpFreeSpinObject) uwpFreeSpinObject.SetActive(false);
+
+        // Configure elements based on popup type
+        switch (type)
+        {
+            case WinPopupType.FreeSpinTrigger:
+                if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(true);
+                if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(true);
+                if (uwpFreeSpinCountText)
+                {
+                    uwpFreeSpinCountText.gameObject.SetActive(true);
+                    uwpFreeSpinCountText.text = freeSpinCount.ToString();
+                }
+                if (uwpFreeSpinObject) uwpFreeSpinObject.SetActive(true);
+                break;
+
+            case WinPopupType.RegularWin:
+                if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(true);
+                if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(true);
+                if (uwpWinAmountText)
+                {
+                    uwpWinAmountText.gameObject.SetActive(true);
+                    uwpWinAmountText.text = winAmount.ToString("F2");
+                }
+                break;
+
+            case WinPopupType.BigWin:
+                if (uwpBigWinTitle) uwpBigWinTitle.SetActive(true);
+                if (uwpWinAmountText)
+                {
+                    uwpWinAmountText.gameObject.SetActive(true);
+                    uwpWinAmountText.text = winAmount.ToString("F2");
+                    // BigWin: win amount text at Y = 0
+                    RectTransform bigWinAmountRect = uwpWinAmountText.GetComponent<RectTransform>();
+                    if (bigWinAmountRect != null)
+                    {
+                        Vector2 pos = bigWinAmountRect.anchoredPosition;
+                        pos.y = 0f;
+                        bigWinAmountRect.anchoredPosition = pos;
+                    }
+                }
+                break;
+
+            case WinPopupType.MoneyBagCollect:
+                if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(true);
+                if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(true);
+                if (uwpWinAmountText)
+                {
+                    uwpWinAmountText.gameObject.SetActive(true);
+                    uwpWinAmountText.text = winAmount.ToString("F2");
+                }
+                break;
+
+            case WinPopupType.FreeSpinComplete:
+                if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(true);
+                if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(true);
+                if (uwpWinAmountText)
+                {
+                    uwpWinAmountText.gameObject.SetActive(true);
+                    uwpWinAmountText.text = winAmount.ToString("F2");
+                }
+                break;
+        }
+
+        // For non-BigWin types, set win amount text Y to -90
+        if (type != WinPopupType.BigWin && uwpWinAmountText)
+        {
+            RectTransform winAmountRect = uwpWinAmountText.GetComponent<RectTransform>();
+            if (winAmountRect != null)
+            {
+                Vector2 pos = winAmountRect.anchoredPosition;
+                pos.y = -90f;
+                winAmountRect.anchoredPosition = pos;
+            }
+        }
+
+        // Hide spin/stop buttons and show Take button
+        if (spinButton) spinButton.gameObject.SetActive(false);
+        if (stopButton) stopButton.gameObject.SetActive(false);
+        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+        if (uwpTakeButton)
+        {
+            uwpTakeButton.gameObject.SetActive(true);
+            uwpTakeButton.interactable = true;
+        }
+
+        // Show the popup and animate scale: 0 → 1.2 → 1
+        universalWinPopup.SetActive(true);
+        if (universalWinPopupRect)
+        {
+            universalWinPopupRect.localScale = Vector3.zero;
+            Sequence openSeq = DOTween.Sequence();
+            openSeq.Append(universalWinPopupRect.DOScale(1.2f, 0.25f).SetEase(Ease.OutCubic));
+            openSeq.Append(universalWinPopupRect.DOScale(1f, 0.15f).SetEase(Ease.InOutSine));
+        }
+
+        // Start auto-close timer
+        if (uwpAutoCloseCoroutine != null) StopCoroutine(uwpAutoCloseCoroutine);
+        uwpAutoCloseCoroutine = StartCoroutine(AutoCloseUniversalWinPopup());
+    }
+
+    private IEnumerator AutoCloseUniversalWinPopup()
+    {
+        yield return new WaitForSeconds(uwpAutoCloseDelay);
+        uwpAutoCloseCoroutine = null;
+        CloseUniversalWinPopup();
+    }
+
+    /// <summary>
+    /// Closes the universal win popup and invokes the stored callback.
+    /// Called by the Take button.
+    /// </summary>
+    private void CloseUniversalWinPopup()
+    {
+        if (universalWinPopup == null || !universalWinPopup.activeSelf) return;
+
+        // Cancel auto-close timer if Take was pressed manually
+        if (uwpAutoCloseCoroutine != null)
+        {
+            StopCoroutine(uwpAutoCloseCoroutine);
+            uwpAutoCloseCoroutine = null;
+        }
+
+        System.Action callback = universalWinPopupCallback;
+        universalWinPopupCallback = null;
+
+        // Make Take button non-interactable during close animation (keep visible)
+        if (uwpTakeButton) uwpTakeButton.interactable = false;
+
+        // Animate close
+        if (universalWinPopupRect)
+        {
+            Sequence closeSeq = DOTween.Sequence();
+            closeSeq.Append(universalWinPopupRect.DOScale(1.1f, 0.1f));
+            closeSeq.Append(universalWinPopupRect.DOScale(0f, 0.2f).SetEase(Ease.InBack));
+            closeSeq.OnComplete(() =>
+            {
+                universalWinPopupRect.localScale = Vector3.one;
+                universalWinPopup.SetActive(false);
+
+                // Restore spin button first, then hide Take button
+                SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+                if (uwpTakeButton) uwpTakeButton.gameObject.SetActive(false);
+
+                callback?.Invoke();
+            });
+        }
+        else
+        {
+            universalWinPopup.SetActive(false);
+            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+            if (uwpTakeButton) uwpTakeButton.gameObject.SetActive(false);
+            callback?.Invoke();
+        }
     }
 
     #endregion
