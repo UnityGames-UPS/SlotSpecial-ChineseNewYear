@@ -33,8 +33,9 @@ public class OCController : MonoBehaviour
     [SerializeField] private Vector3 landscapeSlotPosition = Vector3.zero;
     [SerializeField] private Vector3 portraitSlotPosition = new Vector3(0f, -150f, 0f);
 
-    [Header("Info Page Settings")]
+    [Header("Info Page & Guide Settings")]
     [SerializeField] private RectTransform infoPageScrollObject;
+    [SerializeField] private RectTransform guideScrollObject;
 
     [Header("Animation Settings")]
     [SerializeField] private float transitionDuration = 0.2f;
@@ -162,6 +163,22 @@ public class OCController : MonoBehaviour
             else
             {
                 infoPageScrollObject.sizeDelta = targetScrollSize;
+            }
+        }
+
+        // 7. Update Guide Scroll Object Height (1080 for Landscape, 1920 for Mobile Portrait)
+        if (guideScrollObject != null)
+        {
+            float targetHeight = isMobilePortrait ? 1920f : 1080f;
+            Vector2 targetScrollSize = new Vector2(guideScrollObject.sizeDelta.x, targetHeight);
+            if (transitionDuration > 0)
+            {
+                Tween scrollTween = guideScrollObject.DOSizeDelta(targetScrollSize, transitionDuration).SetEase(Ease.OutCubic);
+                activeTweens.Add(scrollTween);
+            }
+            else
+            {
+                guideScrollObject.sizeDelta = targetScrollSize;
             }
         }
     }

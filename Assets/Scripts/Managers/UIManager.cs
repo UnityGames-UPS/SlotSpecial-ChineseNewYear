@@ -139,6 +139,14 @@ public class UIManager : MonoBehaviour
     [Header("Game Rules Panel - Portrait")]
     [SerializeField] private Button gameRulesOpenButtonPortrait;
 
+    [Header("Guide Panel")]
+    [SerializeField] private GameObject guidePanel;
+    [SerializeField] private RectTransform guidePanelRect;
+    [SerializeField] private Button guideOpenButton;
+    [SerializeField] private Button guideBackButton;
+    [Header("Guide Panel - Portrait")]
+    [SerializeField] private Button guideOpenButtonPortrait;
+
     [Header("Game Rules Dynamic Texts")]
     [SerializeField] private TMP_Text totalLineCountText;
     [SerializeField] private TMP_Text ruleSymbol0Text;
@@ -200,6 +208,7 @@ public class UIManager : MonoBehaviour
         SetupAutoPlayPanel();
         SetupSettingsPanel();
         SetupGameRulesPanel();
+        SetupGuidePanel();
 
         InitializeExpandShrink();
 
@@ -222,6 +231,7 @@ public class UIManager : MonoBehaviour
 
         SetGameObjectActive(settingsPanel, settingsPanelPortrait, false);
         if (gameRulesPanel) gameRulesPanel.SetActive(false);
+        if (guidePanel) guidePanel.SetActive(false);
         if (universalWinPopup) universalWinPopup.SetActive(false);
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
@@ -448,6 +458,14 @@ public class UIManager : MonoBehaviour
         if (gameRulesBackButton) gameRulesBackButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPopupClose(); CloseGameRulesPanel(); });
     }
 
+    private void SetupGuidePanel()
+    {
+        if (guideOpenButton) guideOpenButton.onClick.AddListener(OpenGuidePanel);
+        if (guideOpenButtonPortrait) guideOpenButtonPortrait.onClick.AddListener(OpenGuidePanel);
+
+        if (guideBackButton) guideBackButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPopupClose(); CloseGuidePanel(); });
+    }
+
     #endregion
 
     #region Game Events
@@ -656,7 +674,9 @@ public class UIManager : MonoBehaviour
 
         double totalPay = gameManager.GetTotalPay();
 
-        SetTMPText(betAmountText, betAmountTextPortrait, totalPay.ToString("F2"));
+        if (betAmountText) betAmountText.text = FormatAmount(totalPay);
+        if (betAmountTextPortrait) betAmountTextPortrait.text = "TOTAL PAY : " + FormatAmount(totalPay);
+
         UpdateBetButtonStates();
         UpdateGameRulesDynamicTexts();
     }
@@ -953,6 +973,31 @@ public class UIManager : MonoBehaviour
 
     #endregion
 
+    #region Guide Panel
+
+    private void OpenGuidePanel()
+    {
+        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
+        {
+            CloseSettingsPanelImmediate();
+        }
+        ShowGuidePanel();
+    }
+
+    private void ShowGuidePanel()
+    {
+        if (guidePanel == null) return;
+        guidePanel.SetActive(true);
+    }
+
+    private void CloseGuidePanel()
+    {
+        if (guidePanel == null) return;
+        guidePanel.SetActive(false);
+    }
+
+    #endregion
+
     #region Free Spins Flow
 
     internal void OnFreeSpinsStarted(int spins)
@@ -1088,13 +1133,14 @@ public class UIManager : MonoBehaviour
 
     internal void UpdateBalanceDisplay()
     {
-        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + gameManager.playerData.balance.ToString("F2"));
+        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + FormatAmount(gameManager.playerData.balance));
     }
 
     private void UpdateWinDisplay(double amount)
     {
         currentWinDisplayValue = amount;
-        SetTMPText(winAmountText, winAmountTextPortrait, amount.ToString("F2"));
+        if (winAmountText) winAmountText.text = FormatAmount(amount);
+        if (winAmountTextPortrait) winAmountTextPortrait.text = "WIN " + FormatAmount(amount);
 
         if (amount > 0)
         {
@@ -1113,7 +1159,7 @@ public class UIManager : MonoBehaviour
         if (balanceTween != null) balanceTween.Kill();
 
         hasOptimisticBalance = false;
-        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + newBalance.ToString("F2"));
+        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + FormatAmount(newBalance));
     }
 
     private void AnimateWinUpdate(double winAmount)
@@ -1125,6 +1171,11 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region Helper Methods
+
+    private string FormatAmount(double amount)
+    {
+        return amount.ToString("0.###");
+    }
 
     private void SetBetControlsEnabled(bool enabled)
     {
@@ -1167,7 +1218,7 @@ public class UIManager : MonoBehaviour
                     for (int m = 0; m < symbol.multipliers.Count; m++)
                     {
                         double win = symbol.multipliers[m];
-                        string line = $"{currentMatch} - {win.ToString("0.##")}";
+                        string line = $"{currentMatch} - {win.ToString("0.###")}";
                         if (m == 0) fullText = line;
                         else fullText += $"\n{line}";
                         
@@ -1445,7 +1496,7 @@ public class UIManager : MonoBehaviour
                 if (uwpWinAmountText)
                 {
                     uwpWinAmountText.gameObject.SetActive(true);
-                    uwpWinAmountText.text = winAmount.ToString("F2");
+                    uwpWinAmountText.text = FormatAmount(winAmount);
                 }
                 break;
 
@@ -1454,7 +1505,7 @@ public class UIManager : MonoBehaviour
                 if (uwpWinAmountText)
                 {
                     uwpWinAmountText.gameObject.SetActive(true);
-                    uwpWinAmountText.text = winAmount.ToString("F2");
+                    uwpWinAmountText.text = FormatAmount(winAmount);
                     RectTransform bigWinAmountRect = uwpWinAmountText.GetComponent<RectTransform>();
                     if (bigWinAmountRect != null)
                     {
@@ -1471,7 +1522,7 @@ public class UIManager : MonoBehaviour
                 if (uwpWinAmountText)
                 {
                     uwpWinAmountText.gameObject.SetActive(true);
-                    uwpWinAmountText.text = winAmount.ToString("F2");
+                    uwpWinAmountText.text = FormatAmount(winAmount);
                 }
                 break;
 
@@ -1481,7 +1532,7 @@ public class UIManager : MonoBehaviour
                 if (uwpWinAmountText)
                 {
                     uwpWinAmountText.gameObject.SetActive(true);
-                    uwpWinAmountText.text = winAmount.ToString("F2");
+                    uwpWinAmountText.text = FormatAmount(winAmount);
                 }
                 break;
         }

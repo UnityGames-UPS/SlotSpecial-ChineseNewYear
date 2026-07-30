@@ -198,7 +198,7 @@ public class MoneyBagController : MonoBehaviour
         if (rewardText != null)
         {
             rewardText.gameObject.SetActive(true);
-            rewardText.text = cashValue.ToString("F2");
+            rewardText.text = cashValue.ToString("0.###");
             rewardText.color = new Color(rewardText.color.r, rewardText.color.g, rewardText.color.b, 1f);
 
             rewardText.transform.localScale = Vector3.zero;
