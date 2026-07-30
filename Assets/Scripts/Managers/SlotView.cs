@@ -78,6 +78,9 @@ public class SlotView : MonoBehaviour
     [Tooltip("Delay between enabling winBox overlay and starting the ImageAnimation - for sync timing")]
     [SerializeField] private float winLineBoxToAnimationDelay = 0.05f;
 
+    [Header("Phase 1 Total Win Presentation")]
+    [SerializeField] private TMPro.TMP_Text phase1TotalWinText;
+
     [Header("Win Box Overlays — Col 0..4  (each has 3 rows: 0=top .. 2=bottom)")]
     [SerializeField] private ColumnOverlays[] winBoxColumns = new ColumnOverlays[5];
 
@@ -116,6 +119,7 @@ public class SlotView : MonoBehaviour
     {
         DisableColumns(winBoxColumns);
         DisableColumns(winAnimationColumns);
+        HidePhase1TotalWinText();
         if (anticipationFrame) anticipationFrame.SetActive(false);
     }
 
@@ -848,78 +852,187 @@ public class SlotView : MonoBehaviour
 
     internal void ShowWinLineAnimation(List<WinLine> winLines, System.Action onComplete)
     {
-
         if (winLines == null || winLines.Count == 0)
         {
             onComplete?.Invoke();
             return;
         }
 
-        for (int i = 0; i < winLines.Count; i++)
-        {
-            var line = winLines[i];
-    
-        }
-
         KillWinTweens();
-        winAnimationCoroutine = StartCoroutine(PlayWinLinesSequentially(winLines, onComplete));
+        winAnimationCoroutine = StartCoroutine(PlayTwoPhaseWinLines(winLines, onComplete));
     }
 
-
-    private IEnumerator PlayWinLinesSequentially(List<WinLine> winLines, System.Action onComplete)
+    private IEnumerator PlayTwoPhaseWinLines(List<WinLine> winLines, System.Action onComplete)
     {
-        int loopCount = (gameManager != null && (gameManager.isInFreeSpins || gameManager.isAutoPlaying)) ? 1 : winSymbolLoopCount;
-        float lineDuration = winSymbolLoopDuration * loopCount;
+        int rowLimit = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
 
-        List<int> prevPositions = null;
-
-        Debug.Log($"[PlayWinLinesSequentially] Starting win animation for {winLines.Count} lines");
-
+        // ==========================================
+        // PHASE 1: Show all winning icons at once
+        // ==========================================
+        HashSet<int> allWinPositions = new HashSet<int>();
         foreach (var winLine in winLines)
         {
-            if (winLine.positions == null || winLine.positions.Count == 0) continue;
-
-           
-            if (prevPositions != null)
+            if (winLine.positions != null)
             {
-                KillWinTweens(false);
-                foreach (int flatIdx in prevPositions)
+                foreach (int flatIndex in winLine.positions)
                 {
-                    int r = flatIdx / 5;
-                    int c = flatIdx % 5;
-                    DisableWinBox(c, r);
-                    ResetSymbolScale(c, r);
+                    allWinPositions.Add(flatIndex);
                 }
             }
-
-            AudioManager.Instance?.PlayWinLine();
-
-            foreach (int flatIndex in winLine.positions)
-            {
-                int row = flatIndex / 5;
-                int col = flatIndex % 5;
-
-                int rowLimit = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
-                if (col < 0 || col >= 5 || row < 0 || row >= rowLimit)
-                {
-                    Debug.LogWarning($"[PlayWinLinesSequentially] Invalid position! col: {col}, row: {row}");
-                    continue;
-                }
-
-                EnableWinBox(col, row);
-
-                AnimateWinSymbol(col, row);
-            }
-
-            prevPositions = new List<int>(winLine.positions);
-
-            yield return new WaitForSeconds(lineDuration);
         }
+
+        Debug.Log($"[PlayTwoPhaseWinLines] Phase 1: Showing all {allWinPositions.Count} winning icons at once for {winLines.Count} win lines");
+
+        // Calculate Phase 1 Total Win Amount
+        double totalWinAmount = 0;
+        foreach (var winLine in winLines)
+        {
+            totalWinAmount += winLine.winAmount;
+        }
+        if (totalWinAmount <= 0 && gameManager != null && gameManager.lastResult != null)
+        {
+            totalWinAmount = gameManager.lastResult.winAmount;
+        }
+
+        // Show Phase 1 Total Win Text with final win value
+        ShowPhase1TotalWin(totalWinAmount);
+
+        AudioManager.Instance?.PlayWinLine();
+
+        foreach (int flatIndex in allWinPositions)
+        {
+            int row = flatIndex / 5;
+            int col = flatIndex % 5;
+
+            if (col < 0 || col >= 5 || row < 0 || row >= rowLimit)
+            {
+                Debug.LogWarning($"[PlayTwoPhaseWinLines] Invalid position! col: {col}, row: {row}");
+                continue;
+            }
+
+            EnableWinBox(col, row);
+            AnimateWinSymbol(col, row);
+        }
+
+        yield return new WaitForSeconds(winSymbolLoopDuration);
 
         AudioManager.Instance?.StopWinLine();
         KillWinTweens(false);
+        HideAllWinLineTexts();
+        HidePhase1TotalWinText();
 
+        // Invoke onComplete immediately after Phase 1 so game logic (Free Spins / Autoplay / Win complete) can proceed
         onComplete?.Invoke();
+
+        // Skip Phase 2 if in Free Spins, Autoplay, or if a Special Feature (USpin, MoneyBag, Scatter trigger) was triggered
+        bool hasSpecialFeature = (gameManager != null && gameManager.lastResult != null && (
+            (gameManager.lastResult.uSpinData != null && gameManager.lastResult.uSpinData.triggered) ||
+            (gameManager.lastResult.moneyBagData != null && gameManager.lastResult.moneyBagData.triggered) ||
+            (gameManager.lastResult.freeSpinData != null && gameManager.lastResult.freeSpinData.isTriggered)
+        ));
+
+        bool skipPhase2 = (gameManager != null && (gameManager.isInFreeSpins || gameManager.isAutoPlaying)) || hasSpecialFeature;
+        if (skipPhase2)
+        {
+            yield break;
+        }
+
+        // ==========================================
+        // PHASE 2: Individual Win Line presentation loop
+        // ==========================================
+        while (true)
+        {
+            foreach (var winLine in winLines)
+            {
+                if (winLine.positions == null || winLine.positions.Count == 0) continue;
+
+                KillWinTweens(false);
+                HideAllWinLineTexts();
+
+                AudioManager.Instance?.PlayWinLine();
+
+                foreach (int flatIndex in winLine.positions)
+                {
+                    int row = flatIndex / 5;
+                    int col = flatIndex % 5;
+
+                    if (col < 0 || col >= 5 || row < 0 || row >= rowLimit) continue;
+
+                    EnableWinBox(col, row);
+                    AnimateWinSymbol(col, row);
+                }
+
+                // Show WinLineText on 1st icon of the active win line only if there are multiple win lines
+                if (winLines.Count > 1)
+                {
+                    int firstFlatIndex = winLine.positions[0];
+                    int firstRow = firstFlatIndex / 5;
+                    int firstCol = firstFlatIndex % 5;
+                    ShowWinLineTextOnIcon(firstCol, firstRow, winLine.winAmount);
+                }
+
+                yield return new WaitForSeconds(winSymbolLoopDuration);
+            }
+        }
+    }
+
+    private void ShowWinLineTextOnIcon(int col, int row, double winAmount)
+    {
+        if (col < 0 || col >= reelImagesList.Count) return;
+        var reel = reelImagesList[col];
+        if (reel.images == null) return;
+        int imageIndex = 2 + row;
+        if (imageIndex >= reel.images.Count) return;
+
+        Image symbolImage = reel.images[imageIndex];
+        if (symbolImage == null) return;
+
+        Transform textTransform = symbolImage.transform.Find("WinLineText");
+        if (textTransform != null)
+        {
+            var tmpText = textTransform.GetComponent<TMPro.TMP_Text>();
+            if (tmpText != null)
+            {
+                tmpText.text = winAmount.ToString("0.###");
+            }
+            textTransform.gameObject.SetActive(true);
+        }
+    }
+
+    private void HideAllWinLineTexts()
+    {
+        if (reelImagesList == null) return;
+        foreach (var reel in reelImagesList)
+        {
+            if (reel.images != null)
+            {
+                foreach (var image in reel.images)
+                {
+                    if (image != null)
+                    {
+                        Transform textTransform = image.transform.Find("WinLineText");
+                        if (textTransform != null)
+                        {
+                            textTransform.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void ShowPhase1TotalWin(double totalWinAmount)
+    {
+        if (phase1TotalWinText != null)
+        {
+            phase1TotalWinText.text = totalWinAmount.ToString("0.###");
+            phase1TotalWinText.gameObject.SetActive(true);
+        }
+    }
+
+    private void HidePhase1TotalWinText()
+    {
+        if (phase1TotalWinText != null) phase1TotalWinText.gameObject.SetActive(false);
     }
     private void EnableWinBox(int col, int row)
     {
@@ -1143,6 +1256,8 @@ public class SlotView : MonoBehaviour
         }
 
         DisableColumns(winBoxColumns);
+        HideAllWinLineTexts();
+        HidePhase1TotalWinText();
 
         // Restore all symbol image alphas to full opacity
         foreach (var reel in reelImagesList)

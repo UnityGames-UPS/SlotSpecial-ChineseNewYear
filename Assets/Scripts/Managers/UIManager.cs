@@ -1318,18 +1318,22 @@ public class UIManager : MonoBehaviour
         // 6. Handle the two possibilities
         if (resultData.type == "FREE_GAMES")
         {
-            bool takePressed = false;
-            ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
-            {
-                takePressed = true;
-            });
-            yield return new WaitUntil(() => takePressed);
-
             if (gameManager != null && gameManager.isInFreeSpins)
             {
+                bool takePressed = false;
+                ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
+                {
+                    takePressed = true;
+                });
+                yield return new WaitUntil(() => takePressed);
+
                 gameManager.freeSpinsRemaining += resultData.freeGamesAwarded;
                 int updatedTotalSpins = totalFreeSpinsAwarded + resultData.freeGamesAwarded;
                 UpdateFreeSpinCount(gameManager.freeSpinsUsed, updatedTotalSpins);
+            }
+            else
+            {
+                yield return new WaitForSeconds(0.5f);
             }
 
             if (transitionBackFilm != null)
@@ -1442,6 +1446,11 @@ public class UIManager : MonoBehaviour
                 yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
                 yield return new WaitForSeconds(0.5f);
             }
+
+            if (moneyBagController != null)
+            {
+                moneyBagController.gameObject.SetActive(false);
+            }
         }
         else
         {
@@ -1468,6 +1477,7 @@ public class UIManager : MonoBehaviour
     {
         if (universalWinPopup == null) return;
 
+        isSpecialWinActive = true;
         universalWinPopupCallback = onTakePressed;
 
         if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(false);
@@ -1551,8 +1561,10 @@ public class UIManager : MonoBehaviour
         SetButtonActive(spinButton, spinButtonPortrait, false);
         SetButtonActive(stopButton, stopButtonPortrait, false);
         SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
-        SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, true);
-        SetButtonInteractable(uwpTakeButton, uwpTakeButtonPortrait, true);
+
+        bool showTakeButton = (type != WinPopupType.BigWin);
+        SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, showTakeButton);
+        SetButtonInteractable(uwpTakeButton, uwpTakeButtonPortrait, showTakeButton);
 
         universalWinPopup.SetActive(true);
         if (universalWinPopupRect)
@@ -1599,8 +1611,9 @@ public class UIManager : MonoBehaviour
                 universalWinPopupRect.localScale = Vector3.one;
                 universalWinPopup.SetActive(false);
 
-                SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
                 SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, false);
+                isSpecialWinActive = false;
+                EnableControlsAfterWinAnimation();
 
                 callback?.Invoke();
             });
@@ -1608,8 +1621,10 @@ public class UIManager : MonoBehaviour
         else
         {
             universalWinPopup.SetActive(false);
-            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
             SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, false);
+            isSpecialWinActive = false;
+            EnableControlsAfterWinAnimation();
+
             callback?.Invoke();
         }
     }

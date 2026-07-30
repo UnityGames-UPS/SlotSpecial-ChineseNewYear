@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float turboSpinDuration = 2.0f;
     [SerializeField] private float quickSpinCycleDuration = 0.8f;
 
+    [Header("Win Settings")]
+    [SerializeField] private double bigWinMultiplierThreshold = 500.0;
+    public double BigWinMultiplierThreshold => bigWinMultiplierThreshold;
+
     internal GameConfig gameConfig;
     internal PlayerData playerData;
     internal SpinResult lastResult;
@@ -227,10 +231,12 @@ public class GameManager : MonoBehaviour
             double totalPay = GetTotalPay();
             double multiplier = totalPay > 0 ? (lastResult.winAmount / totalPay) : 0;
 
-            if (multiplier >= 5)
+            if (multiplier >= bigWinMultiplierThreshold)
             {
                 uiManager.DisableControlsDuringWinAnimation();
                 currentState = GameState.Idle;
+                slotView.ShowWinLineAnimation(lastResult.winLines, OnWinAnimationComplete);
+                StartCoroutine(TriggerWinPopupWithDelay(1.5f, lastResult));
             }
             else
             {
@@ -239,10 +245,8 @@ public class GameManager : MonoBehaviour
                 uiManager.EnableControlsAfterWinAnimation();
                 uiManager.OnSpinCompleted(lastResult);
                 currentState = GameState.Idle;
+                slotView.ShowWinLineAnimation(lastResult.winLines, OnWinAnimationComplete);
             }
-
-            slotView.ShowWinLineAnimation(lastResult.winLines, OnWinAnimationComplete);
-            StartCoroutine(TriggerWinPopupWithDelay(1.5f, lastResult));
         }
         else
         {
@@ -256,18 +260,17 @@ public class GameManager : MonoBehaviour
     {
         double totalPay = GetTotalPay();
         double multiplier = totalPay > 0 ? (result.winAmount / totalPay) : 0;
-        if (multiplier >= 5)
-        {
-            waitingForSpecialWin = true;
-        }
-        else
+        if (multiplier < bigWinMultiplierThreshold)
         {
             waitingForSpecialWin = false;
+            yield break;
         }
+
+        waitingForSpecialWin = true;
 
         yield return new WaitForSeconds(delay);
 
-        if (lastResult == result)
+        if (lastResult == result && multiplier >= bigWinMultiplierThreshold)
         {
             uiManager.TriggerBigWinPopup(result, () =>
             {
@@ -287,8 +290,8 @@ public class GameManager : MonoBehaviour
             double totalPay = GetTotalPay();
             double multiplier = totalPay > 0 ? (lastResult.winAmount / totalPay) : 0;
 
-            // Only update UI here if it wasn't already updated in OnReelsStoppedComplete (multiplier < 5)
-            if (multiplier >= 5)
+            // Only update UI here if it wasn't already updated in OnReelsStoppedComplete (multiplier < bigWinMultiplierThreshold)
+            if (multiplier >= bigWinMultiplierThreshold)
             {
                 uiManager.OnSpinStopping(lastResult);
             }

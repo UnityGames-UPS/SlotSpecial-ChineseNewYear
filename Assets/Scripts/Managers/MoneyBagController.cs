@@ -12,6 +12,7 @@ public class MoneyBagController : MonoBehaviour
     [SerializeField] private List<Button> moneyBagButtons;
     [SerializeField] private List<TMP_Text> rewardTexts;
     [SerializeField] private List<GameObject> coinPiles;
+    [SerializeField] private List<GameObject> coinFountainAnimObjects;
     
     [Header("Titles")]
     [SerializeField] private List<GameObject> titleObjects;
@@ -20,6 +21,7 @@ public class MoneyBagController : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float popDuration = 0.5f;
     [SerializeField] private float textMoveDuration = 1.0f;
+    [SerializeField] private float fountainAnimDuration = 1.0f;
     [SerializeField] private Vector3 winTextTargetPos = new Vector3(0, -100, 0);
 
     private MoneyBagResultData currentResultData;
@@ -46,6 +48,14 @@ public class MoneyBagController : MonoBehaviour
             if (i < coinPiles.Count && coinPiles[i] != null)
             {
                 coinPiles[i].SetActive(false); // Hide initially
+            }
+        }
+
+        if (coinFountainAnimObjects != null)
+        {
+            foreach (var fountainObj in coinFountainAnimObjects)
+            {
+                if (fountainObj != null) fountainObj.SetActive(false);
             }
         }
 
@@ -98,6 +108,10 @@ public class MoneyBagController : MonoBehaviour
                 rewardTexts[i].gameObject.SetActive(false);
                 rewardTexts[i].rectTransform.localPosition = originalTextPositions[i];
                 rewardTexts[i].transform.localScale = Vector3.zero;
+            }
+            if (coinFountainAnimObjects != null && i < coinFountainAnimObjects.Count && coinFountainAnimObjects[i] != null)
+            {
+                coinFountainAnimObjects[i].SetActive(false);
             }
         }
         
@@ -166,8 +180,7 @@ public class MoneyBagController : MonoBehaviour
         // Wait for dummy bags to pop
         yield return new WaitForSeconds(popDuration + 1.5f);
 
-        // Transition back
-        gameObject.SetActive(false);
+        // Notify bonus pick sequence complete (UIManager will disable panel during black film transition)
         onCompleteCallback?.Invoke();
     }
 
@@ -178,6 +191,11 @@ public class MoneyBagController : MonoBehaviour
         GameObject mainBag = moneyBagButtons[index] != null ? moneyBagButtons[index].gameObject : null;
         GameObject coinPile = coinPiles[index];
         TMP_Text rewardText = rewardTexts[index];
+
+        if (coinFountainAnimObjects != null && index < coinFountainAnimObjects.Count && coinFountainAnimObjects[index] != null)
+        {
+            StartCoroutine(PlayCoinFountainAnimation(index));
+        }
 
         if (mainBag != null)
         {
@@ -203,6 +221,49 @@ public class MoneyBagController : MonoBehaviour
 
             rewardText.transform.localScale = Vector3.zero;
             rewardText.transform.DOScale(Vector3.one, popDuration / 2f).SetEase(Ease.OutBack);
+        }
+    }
+
+    private IEnumerator PlayCoinFountainAnimation(int index)
+    {
+        if (coinFountainAnimObjects == null || index < 0 || index >= coinFountainAnimObjects.Count) yield break;
+
+        GameObject fountainObj = coinFountainAnimObjects[index];
+        if (fountainObj == null) yield break;
+
+        fountainObj.SetActive(true);
+
+        float waitTime = fountainAnimDuration;
+
+        Animator animator = fountainObj.GetComponent<Animator>();
+        if (animator == null) animator = fountainObj.GetComponentInChildren<Animator>();
+
+        if (animator != null)
+        {
+            animator.Play(0, -1, 0f);
+            yield return null;
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+            if (stateInfo.length > 0)
+            {
+                waitTime = stateInfo.length;
+            }
+        }
+        else
+        {
+            Animation anim = fountainObj.GetComponent<Animation>();
+            if (anim == null) anim = fountainObj.GetComponentInChildren<Animation>();
+            if (anim != null && anim.clip != null)
+            {
+                anim.Play();
+                waitTime = anim.clip.length;
+            }
+        }
+
+        yield return new WaitForSeconds(waitTime);
+
+        if (fountainObj != null)
+        {
+            fountainObj.SetActive(false);
         }
     }
 }

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3855719837909794819}
   - component: {fileID: 5229162403976585753}
   m_Layer: 5
-  m_Name: WinLineText (1)
+  m_Name: WinLineText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
