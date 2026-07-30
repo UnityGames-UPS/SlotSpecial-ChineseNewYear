@@ -18,13 +18,17 @@ public class AudioManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         _musicEnabled = PlayerPrefs.GetInt(PrefKeyMusic, 1) == 1;
         _sfxEnabled   = PlayerPrefs.GetInt(PrefKeysfx,   1) == 1;
+        _musicVolume  = PlayerPrefs.GetFloat(PrefKeyMusicVol, 0.5f);
+        _sfxVolume    = PlayerPrefs.GetFloat(PrefKeySfxVol,   1.0f);
 
         ApplyMusicVolume();
         ApplySfxVolume();
     }
 
-    private const string PrefKeyMusic = "audio_music_enabled";
-    private const string PrefKeysfx   = "audio_sfx_enabled";
+    private const string PrefKeyMusic    = "audio_music_enabled";
+    private const string PrefKeysfx      = "audio_sfx_enabled";
+    private const string PrefKeyMusicVol = "audio_music_volume";
+    private const string PrefKeySfxVol   = "audio_sfx_volume";
 
     [Header("Audio Sources")]
     [SerializeField] private AudioSource bgMusicSource;
@@ -84,10 +88,13 @@ public class AudioManager : MonoBehaviour
 
     private bool _musicEnabled = true;
     private bool _sfxEnabled   = true;
+    private float _musicVolume = 0.5f;
+    private float _sfxVolume   = 1.0f;
 
     internal bool MusicEnabled => _musicEnabled;
     internal bool SfxEnabled   => _sfxEnabled;
-
+    internal float MusicVolume => _musicVolume;
+    internal float SfxVolume   => _sfxVolume;
 
     internal void SetMusicEnabled(bool on)
     {
@@ -97,7 +104,6 @@ public class AudioManager : MonoBehaviour
         ApplyMusicVolume();
     }
 
-
     internal void SetSfxEnabled(bool on)
     {
         _sfxEnabled = on;
@@ -106,15 +112,31 @@ public class AudioManager : MonoBehaviour
         ApplySfxVolume();
     }
 
+    internal void SetMusicVolume(float volume)
+    {
+        _musicVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(PrefKeyMusicVol, _musicVolume);
+        PlayerPrefs.Save();
+        ApplyMusicVolume();
+    }
+
+    internal void SetSfxVolume(float volume)
+    {
+        _sfxVolume = Mathf.Clamp01(volume);
+        PlayerPrefs.SetFloat(PrefKeySfxVol, _sfxVolume);
+        PlayerPrefs.Save();
+        ApplySfxVolume();
+    }
+
     private void ApplyMusicVolume()
     {
         if (bgMusicSource == null) return;
-        bgMusicSource.volume = _musicEnabled ? 0.5f : 0f;
+        bgMusicSource.volume = _musicEnabled ? _musicVolume : 0f;
     }
 
     private void ApplySfxVolume()
     {
-        float v = _sfxEnabled ? 1f : 0f;
+        float v = _sfxEnabled ? _sfxVolume : 0f;
         if (uiSource      != null) uiSource.volume      = v;
         if (specialSource != null) specialSource.volume  = v;
         if (reserveSource != null) reserveSource.volume  = v;

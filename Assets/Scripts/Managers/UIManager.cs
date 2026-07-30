@@ -11,32 +11,41 @@ public class UIManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameManager gameManager;
     [SerializeField] private PopupManager popupManager;
-[SerializeField] private JSFunctCalls jsFunctCalls;
+    [SerializeField] private JSFunctCalls jsFunctCalls;
 
     [Header("Loading & Intro")]
     [SerializeField] private GameObject gameScreen;
     [SerializeField] private GameObject gameLogoObject;
 
-    [Header("Backgrounds")]
-    [SerializeField] private GameObject normalSpinBackground;
-    [SerializeField] private GameObject freeSpinBackground;
+
 
     [Header("Bet Controls")]
     [SerializeField] private TMP_Text betAmountText;
     [SerializeField] private Button betPlusButton;
     [SerializeField] private Button betMinusButton;
+    [Header("Bet Controls - Portrait")]
+    [SerializeField] private TMP_Text betAmountTextPortrait;
+    [SerializeField] private Button betPlusButtonPortrait;
+    [SerializeField] private Button betMinusButtonPortrait;
 
     [Header("Balance & Win")]
     [SerializeField] private TMP_Text balanceText;
     [SerializeField] private TMP_Text winAmountText;
     [SerializeField] private GameObject winTextObject;
     [SerializeField] private GameObject goodLuckObject;
+    [Header("Balance & Win - Portrait")]
+    [SerializeField] private TMP_Text balanceTextPortrait;
+    [SerializeField] private TMP_Text winAmountTextPortrait;
+    [SerializeField] private GameObject winTextObjectPortrait;
+    [SerializeField] private GameObject goodLuckObjectPortrait;
 
     [Header("Bonus Wheel")]
     [SerializeField] private WheelSpinController mainWheel;
     [SerializeField] private GameObject wheelScreen;
     [SerializeField] private Button wheelSpinButton;
     [SerializeField] private CanvasGroup transitionBackFilm;
+    [Header("Bonus Wheel - Portrait")]
+    [SerializeField] private Button wheelSpinButtonPortrait;
     
     [Header("Money Bag Bonus")]
     [SerializeField] private MoneyBagController moneyBagController;
@@ -51,14 +60,22 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text uwpFreeSpinCountText;
     [SerializeField] private GameObject uwpFreeSpinObject;
     [SerializeField] private Button uwpTakeButton;
+    [Header("Universal Win Popup - Portrait")]
+    [SerializeField] private Button uwpTakeButtonPortrait;
 
     [Header("Spin Button")]
     [SerializeField] private Button spinButton;
     [SerializeField] private Button stopButton;
+    [Header("Spin Button - Portrait")]
+    [SerializeField] private Button spinButtonPortrait;
+    [SerializeField] private Button stopButtonPortrait;
 
     [Header("Auto Play Stop Control")]
     [SerializeField] private Button autoSpinStopButton;
     [SerializeField] private TMP_Text autoSpinRemainingText;
+    [Header("Auto Play Stop Control - Portrait")]
+    [SerializeField] private Button autoSpinStopButtonPortrait;
+    [SerializeField] private TMP_Text autoSpinRemainingTextPortrait;
 
     [Header("Auto Play Panel")]
     [SerializeField] private GameObject autoPlayPanel;
@@ -72,29 +89,55 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button autoPlay500Button;
     [SerializeField] private Button autoPlayInfiniteButton;
 
+    [Header("Auto Play Panel - Portrait")]
+    [SerializeField] private GameObject autoPlayPanelPortrait;
+    [SerializeField] private RectTransform autoPlayPanelRectPortrait;
+    [SerializeField] private Button autoPlayCloseButtonPortrait;
+    [SerializeField] private Button autoPlay10ButtonPortrait;
+    [SerializeField] private Button autoPlay50ButtonPortrait;
+    [SerializeField] private Button autoPlay100ButtonPortrait;
+    [SerializeField] private Button autoPlay200ButtonPortrait;
+    [SerializeField] private Button autoPlay500ButtonPortrait;
+    [SerializeField] private Button autoPlayInfiniteButtonPortrait;
+
     [Header("Settings Panel")]
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private RectTransform settingsPanelRect;
     [SerializeField] private Button settingsOpenButton;
     [SerializeField] private Button settingsCloseButton;
     [SerializeField] private Button gameQuitButton;
+    [Header("Settings Panel - Portrait")]
+    [SerializeField] private GameObject settingsPanelPortrait;
+    [SerializeField] private RectTransform settingsPanelRectPortrait;
+    [SerializeField] private Button settingsOpenButtonPortrait;
+    [SerializeField] private Button settingsCloseButtonPortrait;
+    [SerializeField] private Button gameQuitButtonPortrait;
 
     [Header("Speed Buttons (Three-Layer Toggle)")]
     [SerializeField] private Button normalSpeedButton;
     [SerializeField] private Button turboSpeedButton;
     [SerializeField] private Button quickSpeedButton;
+    [Header("Speed Buttons - Portrait")]
+    [SerializeField] private Button normalSpeedButtonPortrait;
+    [SerializeField] private Button turboSpeedButtonPortrait;
+    [SerializeField] private Button quickSpeedButtonPortrait;
 
-    [Header("Audio Toggles")]
-    [Tooltip("Toggle for background music on/off.")]
-    [SerializeField] private Toggle musicToggle;
-    [Tooltip("Toggle for all SFX sounds on/off.")]
-    [SerializeField] private Toggle sfxToggle;
+    [Header("Sound Panel")]
+    [SerializeField] private GameObject soundPanel;
+    [SerializeField] private RectTransform soundPanelRect;
+    [SerializeField] private Slider musicSlider;
+    [SerializeField] private Slider sfxSlider;
+    [SerializeField] private Button soundPanelCloseButton;
+    [SerializeField] private Button soundPanelOpenButton;
+    [SerializeField] private Button soundPanelOpenButtonPortrait;
 
     [Header("Game Rules Panel")]
     [SerializeField] private GameObject gameRulesPanel;
     [SerializeField] private RectTransform gameRulesPanelRect;
     [SerializeField] private Button gameRulesOpenButton;
     [SerializeField] private Button gameRulesBackButton;
+    [Header("Game Rules Panel - Portrait")]
+    [SerializeField] private Button gameRulesOpenButtonPortrait;
 
     [Header("Game Rules Dynamic Texts")]
     [SerializeField] private TMP_Text totalLineCountText;
@@ -113,11 +156,13 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject freeSpinCountContainer;
     [SerializeField] private TMP_Text remainingFreeSpinsText;
 
-
-
     [Header("Expand-Shrink Controls")]
     [SerializeField] private Button expandButton;
     [SerializeField] private Button shrinkButton;
+    [Header("Expand-Shrink Controls - Portrait")]
+    [SerializeField] private Button expandButtonPortrait;
+    [SerializeField] private Button shrinkButtonPortrait;
+
     private bool isExpanded = false;
 
     private Tween balanceTween;
@@ -158,30 +203,24 @@ public class UIManager : MonoBehaviour
 
         InitializeExpandShrink();
 
-        InitializeBackgrounds();
         if (gameScreen) gameScreen.SetActive(true);
         InitializeUI();
         StartCoroutine(WaitForInitialization());
         RegisterFullscreenListener();
     }
 
-    private void InitializeBackgrounds()
-    {
-        if (normalSpinBackground) normalSpinBackground.SetActive(true);
-        if (freeSpinBackground) freeSpinBackground.SetActive(false);
-    }
-
     private void InitializeUI()
     {
-        if (autoPlayPanel) autoPlayPanel.SetActive(false);
+        if (soundPanel) soundPanel.SetActive(false);
+        SetGameObjectActive(autoPlayPanel, autoPlayPanelPortrait, false);
         if (autoPlayPanelRect) autoPlayPanelRect.anchoredPosition = new Vector2(autoPlayPanelRect.anchoredPosition.x, -600f);
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+        if (autoPlayPanelRectPortrait) autoPlayPanelRectPortrait.anchoredPosition = new Vector2(autoPlayPanelRectPortrait.anchoredPosition.x, -600f);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
 
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
         UpdateSpeedButtonsVisibility(gameManager.currentSpinSpeed);
 
-
-        if (settingsPanel) settingsPanel.SetActive(false);
+        SetGameObjectActive(settingsPanel, settingsPanelPortrait, false);
         if (gameRulesPanel) gameRulesPanel.SetActive(false);
         if (universalWinPopup) universalWinPopup.SetActive(false);
 
@@ -221,7 +260,33 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    #endregion
 
+    #region UI Synchronization Helpers
+
+    private void SetTMPText(TMP_Text text1, TMP_Text text2, string content)
+    {
+        if (text1) text1.text = content;
+        if (text2) text2.text = content;
+    }
+
+    private void SetGameObjectActive(GameObject obj1, GameObject obj2, bool active)
+    {
+        if (obj1) obj1.SetActive(active);
+        if (obj2) obj2.SetActive(active);
+    }
+
+    private void SetButtonInteractable(Button btn1, Button btn2, bool interactable)
+    {
+        if (btn1) btn1.interactable = interactable;
+        if (btn2) btn2.interactable = interactable;
+    }
+
+    private void SetButtonActive(Button btn1, Button btn2, bool active)
+    {
+        if (btn1) btn1.gameObject.SetActive(active);
+        if (btn2) btn2.gameObject.SetActive(active);
+    }
 
     #endregion
 
@@ -229,9 +294,13 @@ public class UIManager : MonoBehaviour
 
     private void SetupButtons()
     {
+        // Bet buttons
         if (betPlusButton)  betPlusButton.onClick.AddListener(() => { AudioManager.Instance?.PlayBetPlus();  gameManager.IncreaseBet(); });
         if (betMinusButton) betMinusButton.onClick.AddListener(() => { AudioManager.Instance?.PlayBetMinus(); gameManager.DecreaseBet(); });
-        
+        if (betPlusButtonPortrait)  betPlusButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayBetPlus();  gameManager.IncreaseBet(); });
+        if (betMinusButtonPortrait) betMinusButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayBetMinus(); gameManager.DecreaseBet(); });
+
+        // Spin button
         if (spinButton)
         {
             var holdHandler = spinButton.GetComponent<SpinButtonHoldHandler>();
@@ -245,8 +314,25 @@ public class UIManager : MonoBehaviour
                 spinButton.onClick.AddListener(OnSpinButtonPressed);
             }
         }
-        if (stopButton) stopButton.onClick.AddListener(OnStopButtonPressed);
+        if (spinButtonPortrait)
+        {
+            var holdHandler = spinButtonPortrait.GetComponent<SpinButtonHoldHandler>();
+            if (holdHandler != null)
+            {
+                holdHandler.OnClick.AddListener(OnSpinButtonPressed);
+                holdHandler.OnHoldThreeSeconds.AddListener(OnSpinButtonHeld);
+            }
+            else
+            {
+                spinButtonPortrait.onClick.AddListener(OnSpinButtonPressed);
+            }
+        }
 
+        // Stop button
+        if (stopButton) stopButton.onClick.AddListener(OnStopButtonPressed);
+        if (stopButtonPortrait) stopButtonPortrait.onClick.AddListener(OnStopButtonPressed);
+
+        // Auto spin stop button
         if (autoSpinStopButton)
         {
             autoSpinStopButton.onClick.AddListener(() =>
@@ -255,23 +341,40 @@ public class UIManager : MonoBehaviour
                 gameManager.StopAutoPlay();
             });
         }
+        if (autoSpinStopButtonPortrait)
+        {
+            autoSpinStopButtonPortrait.onClick.AddListener(() =>
+            {
+                AudioManager.Instance?.PlayButton();
+                gameManager.StopAutoPlay();
+            });
+        }
 
         if (autoPlayCloseButton) autoPlayCloseButton.onClick.AddListener(CloseAutoPlayPanel);
+        if (autoPlayCloseButtonPortrait) autoPlayCloseButtonPortrait.onClick.AddListener(CloseAutoPlayPanel);
 
-        if (gameQuitButton)    gameQuitButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExitButtonPressed(); });
+        if (gameQuitButton) gameQuitButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExitButtonPressed(); });
+        if (gameQuitButtonPortrait) gameQuitButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExitButtonPressed(); });
 
         if (expandButton) expandButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExpand(); });
         if (shrinkButton) shrinkButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
+        if (expandButtonPortrait) expandButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExpand(); });
+        if (shrinkButtonPortrait) shrinkButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
 
         if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
+        if (wheelSpinButtonPortrait) wheelSpinButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
 
         // Take button for universal win popup
         if (uwpTakeButton) uwpTakeButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); CloseUniversalWinPopup(); });
+        if (uwpTakeButtonPortrait) uwpTakeButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); CloseUniversalWinPopup(); });
 
         // Speed buttons setup (Three-layer Toggle)
         if (normalSpeedButton) normalSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
         if (turboSpeedButton)  turboSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.QuickSpin); });
         if (quickSpeedButton)  quickSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Normal); });
+        if (normalSpeedButtonPortrait) normalSpeedButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
+        if (turboSpeedButtonPortrait)  turboSpeedButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.QuickSpin); });
+        if (quickSpeedButtonPortrait)  quickSpeedButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Normal); });
     }
 
     private void SetupAutoPlayPanel()
@@ -282,45 +385,66 @@ public class UIManager : MonoBehaviour
         if (autoPlay200Button)      autoPlay200Button.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(200); });
         if (autoPlay500Button)      autoPlay500Button.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(500); });
         if (autoPlayInfiniteButton) autoPlayInfiniteButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(-1); });
+
+        if (autoPlay10ButtonPortrait)       autoPlay10ButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(10); });
+        if (autoPlay50ButtonPortrait)       autoPlay50ButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(50); });
+        if (autoPlay100ButtonPortrait)      autoPlay100ButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(100); });
+        if (autoPlay200ButtonPortrait)      autoPlay200ButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(200); });
+        if (autoPlay500ButtonPortrait)      autoPlay500ButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(500); });
+        if (autoPlayInfiniteButtonPortrait) autoPlayInfiniteButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); StartAutoplayWithRounds(-1); });
     }
 
     private void SetupSettingsPanel()
     {
         if (settingsOpenButton) settingsOpenButton.onClick.AddListener(() => { 
             AudioManager.Instance?.PlayButton(); 
-            if (settingsPanel != null && settingsPanel.activeSelf)
+            if ((settingsPanel != null && settingsPanel.activeSelf) || (settingsPanelPortrait != null && settingsPanelPortrait.activeSelf))
                 CloseSettingsPanel();
             else
                 OpenSettingsPanel();
         });
+        if (settingsOpenButtonPortrait) settingsOpenButtonPortrait.onClick.AddListener(() => { 
+            AudioManager.Instance?.PlayButton(); 
+            if ((settingsPanel != null && settingsPanel.activeSelf) || (settingsPanelPortrait != null && settingsPanelPortrait.activeSelf))
+                CloseSettingsPanel();
+            else
+                OpenSettingsPanel();
+        });
+
         if (settingsCloseButton) settingsCloseButton.onClick.AddListener(() => { 
             AudioManager.Instance?.PlayButton(); 
             CloseSettingsPanel(); 
         });
+        if (settingsCloseButtonPortrait) settingsCloseButtonPortrait.onClick.AddListener(() => { 
+            AudioManager.Instance?.PlayButton(); 
+            CloseSettingsPanel(); 
+        });
 
-        if (settingsOpenButton) settingsOpenButton.gameObject.SetActive(true);
-        if (settingsCloseButton) settingsCloseButton.gameObject.SetActive(false);
+        SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
+        SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
 
-        // Audio toggles — restore state from AudioManager then wire callbacks
-        if (musicToggle)
+        // Sound panel buttons & sliders
+        if (soundPanelOpenButton) soundPanelOpenButton.onClick.AddListener(OpenSoundPanel);
+        if (soundPanelOpenButtonPortrait) soundPanelOpenButtonPortrait.onClick.AddListener(OpenSoundPanel);
+        if (soundPanelCloseButton) soundPanelCloseButton.onClick.AddListener(CloseSoundPanel);
+
+        if (musicSlider)
         {
-            if (AudioManager.Instance != null)
-                musicToggle.isOn = AudioManager.Instance.MusicEnabled;
-            musicToggle.onValueChanged.AddListener(OnMusicToggleChanged);
-            RefreshToggleBgAlpha(musicToggle);
+            if (AudioManager.Instance != null) musicSlider.value = AudioManager.Instance.MusicVolume;
+            musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
         }
-        if (sfxToggle)
+        if (sfxSlider)
         {
-            if (AudioManager.Instance != null)
-                sfxToggle.isOn = AudioManager.Instance.SfxEnabled;
-            sfxToggle.onValueChanged.AddListener(OnSfxToggleChanged);
-            RefreshToggleBgAlpha(sfxToggle);
+            if (AudioManager.Instance != null) sfxSlider.value = AudioManager.Instance.SfxVolume;
+            sfxSlider.onValueChanged.AddListener(OnSfxSliderChanged);
         }
     }
 
     private void SetupGameRulesPanel()
     {
         if (gameRulesOpenButton) gameRulesOpenButton.onClick.AddListener(OpenGameRulesPanel);
+        if (gameRulesOpenButtonPortrait) gameRulesOpenButtonPortrait.onClick.AddListener(OpenGameRulesPanel);
+
         if (gameRulesBackButton) gameRulesBackButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPopupClose(); CloseGameRulesPanel(); });
     }
 
@@ -334,7 +458,6 @@ public class UIManager : MonoBehaviour
         UpdateBetDisplay();
         UpdateBalanceDisplay();
         UpdateWinDisplay(0);
-
     }
 
     internal void OnSpinStarted()
@@ -348,129 +471,46 @@ public class UIManager : MonoBehaviour
         else
         {
             SetSpinStopButtonStates(isSpinningState: true, isInteractable: true);
+            SetBetControlsEnabled(false);
+            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, false);
         }
 
-        SetBetControlsEnabled(false);
-        if (settingsOpenButton) settingsOpenButton.interactable = false;
+        CloseSettingsPanelImmediate();
+        CloseAutoPlayPanelImmediate();
+    }
 
-        // Close universal win popup if still open when a new spin starts
-        if (universalWinPopup && universalWinPopup.activeSelf)
+    internal void OnSpinResultReceived()
+    {
+        if (gameManager.isAutoPlaying)
         {
-            universalWinPopup.SetActive(false);
-            universalWinPopupCallback = null;
+            SetSpinStopButtonStates(isSpinningState: true, isInteractable: true);
         }
-        isSpecialWinActive = false;
-
-        // --- Optimistic balance deduction ---
-        if (!gameManager.isInFreeSpins && gameManager.gameConfig != null && gameManager.playerData != null)
+        else if (gameManager.isInFreeSpins)
         {
-            double totalPay = gameManager.GetTotalPay();
-            optimisticBalance = gameManager.playerData.balance - totalPay;
-            hasOptimisticBalance = true;
-
-            if (balanceTween != null) balanceTween.Kill();
-            if (balanceText != null) balanceText.text = "BALANCE : " + optimisticBalance.ToString("F2");
+            SetSpinStopButtonStates(isSpinningState: true, isInteractable: false);
         }
         else
         {
-            hasOptimisticBalance = false;
-        }
-
-        // Don't update free spin count here - wait for server result
-        if (!gameManager.isInFreeSpins)
-        {
-            UpdateWinDisplay(0);
+            SetSpinStopButtonStates(isSpinningState: true, isInteractable: true);
         }
     }
 
-    internal void TriggerBigWinPopup(SpinResult result, System.Action onComplete = null)
+    internal void OnSpinStopping(SpinResult result = null)
     {
-        double totalPay = gameManager.GetTotalPay();
-        double winAmount = result.winAmount;
-        double multiplier = totalPay > 0 ? (winAmount / totalPay) : 0;
-
-        if (multiplier >= 5)
-        {
-            // Show Big Win universal popup — static, waits for Take button
-            isSpecialWinActive = true;
-            DisableControlsDuringWinAnimation();
-
-            // Defer pending wheel/bonus credit win from balance/win update until bonus game Take button
-            double pendingBonusWin = 0;
-            if (result != null)
-            {
-                if (result.uSpinData != null && result.uSpinData.triggered && result.uSpinData.winInCash > 0)
-                    pendingBonusWin += result.uSpinData.winInCash;
-                if (result.moneyBagData != null && result.moneyBagData.triggered && result.moneyBagData.winInCash > 0)
-                    pendingBonusWin += result.moneyBagData.winInCash;
-            }
-
-            // Update win display and balance immediately
-            double targetWin = gameManager.isInFreeSpins ? result.serverTotalRoundWin : winAmount;
-            AnimateWinUpdate(System.Math.Max(0, targetWin - pendingBonusWin));
-            AnimateBalanceUpdate(result.playerData.balance - pendingBonusWin);
-
-            ShowUniversalWinPopup(WinPopupType.BigWin, winAmount, 0, () =>
-            {
-                isSpecialWinActive = false;
-                EnableControlsAfterWinAnimation();
-                OnSpinCompleted(null);
-                onComplete?.Invoke();
-                OnSpecialWinComplete?.Invoke();
-            });
-        }
-        else
-        {
-            onComplete?.Invoke();
-        }
-    }
-
-    internal void OnSpinStopping(SpinResult result)
-    {
-        // Defer pending wheel/bonus credit win from balance/win update until bonus game Take button
-        double pendingBonusWin = 0;
+        UpdateBalanceDisplay();
         if (result != null)
         {
-            if (result.uSpinData != null && result.uSpinData.triggered && result.uSpinData.winInCash > 0)
-                pendingBonusWin += result.uSpinData.winInCash;
-            if (result.moneyBagData != null && result.moneyBagData.triggered && result.moneyBagData.winInCash > 0)
-                pendingBonusWin += result.moneyBagData.winInCash;
-        }
-
-        double displayBalance = result.playerData.balance - pendingBonusWin;
-
-        if (!isSpecialWinActive)
-        {
-            AnimateBalanceUpdate(displayBalance);
-        }
-
-        double targetWin = gameManager.isInFreeSpins ? result.serverTotalRoundWin : result.winAmount;
-        double displayWin = System.Math.Max(0, targetWin - pendingBonusWin);
-
-        if (result.winAmount > 0)
-        {
-            if (!isSpecialWinActive)
-            {
-                AnimateWinUpdate(displayWin);
-            }
-
-            double totalPay = gameManager.GetTotalPay();
-            double multiplier = totalPay > 0 ? (result.winAmount / totalPay) : 0;
-
-            if (multiplier < 5)
-            {
-                AudioManager.Instance?.PlayWinNormal();
-            }
-        }
-        else
-        {
-            UpdateWinDisplay(displayWin);
+            UpdateWinDisplay(result.winAmount);
         }
     }
 
-    internal void OnSpinCompleted(SpinResult result)
+    internal void OnSpinCompleted(SpinResult result = null)
     {
-        if (isSpecialWinActive) return;
+        if (result != null)
+        {
+            UpdateWinDisplay(result.winAmount);
+        }
+        UpdateBalanceDisplay();
 
         if (gameManager.isAutoPlaying)
         {
@@ -485,19 +525,22 @@ public class UIManager : MonoBehaviour
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
 
             SetBetControlsEnabled(true);
-            if (settingsOpenButton) settingsOpenButton.interactable = true;
+            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
         }
+    }
+
+    internal void TriggerBigWinPopup(SpinResult result, System.Action onComplete = null)
+    {
+        double winAmount = (result != null) ? result.winAmount : 0;
+        ShowUniversalWinPopup(WinPopupType.BigWin, winAmount, 0, onComplete);
     }
 
     internal void DisableControlsDuringWinAnimation()
     {
         SetBetControlsEnabled(false);
-        if (spinButton)
-        {
-            spinButton.gameObject.SetActive(false);
-        }
-        if (stopButton) stopButton.gameObject.SetActive(false);
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+        SetButtonActive(spinButton, spinButtonPortrait, false);
+        SetButtonActive(stopButton, stopButtonPortrait, false);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
     }
 
     internal void EnableControlsAfterWinAnimation()
@@ -515,7 +558,7 @@ public class UIManager : MonoBehaviour
         else
         {
             SetBetControlsEnabled(true);
-            if (settingsOpenButton) settingsOpenButton.interactable = true;
+            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
         }
     }
@@ -557,31 +600,21 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Called by GameManager.RequestStop when a forced/manual stop is accepted.
-    /// Immediately disables the stop button so the player cannot spam.
-    /// </summary>
     internal void DisableSpinButtonDuringStop()
     {
         if (gameManager.isAutoPlaying)
         {
-            if (spinButton) spinButton.gameObject.SetActive(false);
-            if (stopButton) stopButton.gameObject.SetActive(false);
-            if (autoSpinStopButton)
-            {
-                autoSpinStopButton.gameObject.SetActive(true);
-                autoSpinStopButton.interactable = false;
-            }
+            SetButtonActive(spinButton, spinButtonPortrait, false);
+            SetButtonActive(stopButton, stopButtonPortrait, false);
+            SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, true);
+            SetButtonInteractable(autoSpinStopButton, autoSpinStopButtonPortrait, false);
         }
         else
         {
-            if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
-            if (spinButton) spinButton.gameObject.SetActive(false);
-            if (stopButton)
-            {
-                stopButton.gameObject.SetActive(true);
-                stopButton.interactable = false;
-            }
+            SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+            SetButtonActive(spinButton, spinButtonPortrait, false);
+            SetButtonActive(stopButton, stopButtonPortrait, true);
+            SetButtonInteractable(stopButton, stopButtonPortrait, false);
         }
     }
 
@@ -589,35 +622,26 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager.isAutoPlaying)
         {
-            if (spinButton) spinButton.gameObject.SetActive(false);
-            if (stopButton) stopButton.gameObject.SetActive(false);
-            if (autoSpinStopButton)
-            {
-                autoSpinStopButton.gameObject.SetActive(true);
-                autoSpinStopButton.interactable = isInteractable;
-            }
+            SetButtonActive(spinButton, spinButtonPortrait, false);
+            SetButtonActive(stopButton, stopButtonPortrait, false);
+            SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, true);
+            SetButtonInteractable(autoSpinStopButton, autoSpinStopButtonPortrait, isInteractable);
         }
         else
         {
-            if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+            SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
             
             if (isSpinningState)
             {
-                if (spinButton) spinButton.gameObject.SetActive(false);
-                if (stopButton)
-                {
-                    stopButton.gameObject.SetActive(true);
-                    stopButton.interactable = isInteractable;
-                }
+                SetButtonActive(spinButton, spinButtonPortrait, false);
+                SetButtonActive(stopButton, stopButtonPortrait, true);
+                SetButtonInteractable(stopButton, stopButtonPortrait, isInteractable);
             }
             else
             {
-                if (stopButton) stopButton.gameObject.SetActive(false);
-                if (spinButton)
-                {
-                    spinButton.gameObject.SetActive(true);
-                    spinButton.interactable = isInteractable;
-                }
+                SetButtonActive(stopButton, stopButtonPortrait, false);
+                SetButtonActive(spinButton, spinButtonPortrait, true);
+                SetButtonInteractable(spinButton, spinButtonPortrait, isInteractable);
             }
         }
     }
@@ -632,19 +656,16 @@ public class UIManager : MonoBehaviour
 
         double totalPay = gameManager.GetTotalPay();
 
-        if (betAmountText)
-            betAmountText.text = totalPay.ToString("F2");
+        SetTMPText(betAmountText, betAmountTextPortrait, totalPay.ToString("F2"));
         UpdateBetButtonStates();
         UpdateGameRulesDynamicTexts();
     }
 
     private void UpdateBetButtonStates()
     {
-        if (betMinusButton) betMinusButton.interactable = true;
-        if (betPlusButton) betPlusButton.interactable = true;
+        SetButtonInteractable(betMinusButton, betMinusButtonPortrait, true);
+        SetButtonInteractable(betPlusButton, betPlusButtonPortrait, true);
     }
-
-
 
     #endregion
 
@@ -661,22 +682,28 @@ public class UIManager : MonoBehaviour
 
     private void OpenAutoPlayPanel()
     {
-        if (settingsPanel && settingsPanel.activeSelf)
+        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
             CloseSettingsPanelImmediate();
 
-        if (autoPlayPanel) autoPlayPanel.SetActive(true);
+        SetGameObjectActive(autoPlayPanel, autoPlayPanelPortrait, true);
         if (autoPlayPanelRect)
         {
             autoPlayPanelRect.anchoredPosition = new Vector2(autoPlayPanelRect.anchoredPosition.x, -600f);
             autoPlayPanelRect.DOAnchorPosY(0f, 0.35f).SetEase(Ease.OutCubic);
         }
+        if (autoPlayPanelRectPortrait)
+        {
+            autoPlayPanelRectPortrait.anchoredPosition = new Vector2(autoPlayPanelRectPortrait.anchoredPosition.x, -600f);
+            autoPlayPanelRectPortrait.DOAnchorPosY(0f, 0.35f).SetEase(Ease.OutCubic);
+        }
     }
 
     private void CloseAutoPlayPanel()
     {
+        AudioManager.Instance?.PlayPopupClose();
+
         if (autoPlayPanelRect)
         {
-            AudioManager.Instance?.PlayPopupClose();
             autoPlayPanelRect.DOAnchorPosY(-600f, 0.35f).SetEase(Ease.InCubic).OnComplete(() =>
             {
                 if (autoPlayPanel) autoPlayPanel.SetActive(false);
@@ -685,24 +712,25 @@ public class UIManager : MonoBehaviour
         else
         {
             if (autoPlayPanel) autoPlayPanel.SetActive(false);
+        }
+
+        if (autoPlayPanelRectPortrait)
+        {
+            autoPlayPanelRectPortrait.DOAnchorPosY(-600f, 0.35f).SetEase(Ease.InCubic).OnComplete(() =>
+            {
+                if (autoPlayPanelPortrait) autoPlayPanelPortrait.SetActive(false);
+            });
+        }
+        else
+        {
+            if (autoPlayPanelPortrait) autoPlayPanelPortrait.SetActive(false);
         }
     }
 
     private void StartAutoplayWithRounds(int rounds)
     {
-        if (autoPlayPanelRect)
-        {
-            autoPlayPanelRect.DOAnchorPosY(-600f, 0.35f).SetEase(Ease.InCubic).OnComplete(() =>
-            {
-                if (autoPlayPanel) autoPlayPanel.SetActive(false);
-                gameManager.StartAutoPlay(rounds);
-            });
-        }
-        else
-        {
-            if (autoPlayPanel) autoPlayPanel.SetActive(false);
-            gameManager.StartAutoPlay(rounds);
-        }
+        CloseAutoPlayPanel();
+        gameManager.StartAutoPlay(rounds);
     }
 
     internal void OnAutoPlayStarted()
@@ -714,7 +742,7 @@ public class UIManager : MonoBehaviour
 
     internal void OnAutoPlayStopped()
     {
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
 
         bool isRoundActive = gameManager.IsSpinning() || gameManager.lastResult != null;
 
@@ -722,17 +750,14 @@ public class UIManager : MonoBehaviour
         {
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
             SetBetControlsEnabled(true);
-            if (settingsOpenButton) settingsOpenButton.interactable = true;
+            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
         }
         else if (isRoundActive)
         {
-            if (spinButton) spinButton.gameObject.SetActive(false);
-            if (stopButton) stopButton.gameObject.SetActive(false);
-            if (autoSpinStopButton)
-            {
-                autoSpinStopButton.gameObject.SetActive(true);
-                autoSpinStopButton.interactable = false;
-            }
+            SetButtonActive(spinButton, spinButtonPortrait, false);
+            SetButtonActive(stopButton, stopButtonPortrait, false);
+            SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, true);
+            SetButtonInteractable(autoSpinStopButton, autoSpinStopButtonPortrait, false);
         }
     }
 
@@ -748,8 +773,7 @@ public class UIManager : MonoBehaviour
             displayStr = $"{gameManager.autoPlayRemainingRounds}";
         }
 
-        if (autoSpinRemainingText)
-            autoSpinRemainingText.text = displayStr;
+        SetTMPText(autoSpinRemainingText, autoSpinRemainingTextPortrait, displayStr);
     }
 
     #endregion
@@ -764,42 +788,58 @@ public class UIManager : MonoBehaviour
 
     private void UpdateSpeedButtonsVisibility(SpinSpeed speed)
     {
-        if (normalSpeedButton) normalSpeedButton.gameObject.SetActive(speed == SpinSpeed.Normal);
-        if (turboSpeedButton) turboSpeedButton.gameObject.SetActive(speed == SpinSpeed.Turbo);
-        if (quickSpeedButton) quickSpeedButton.gameObject.SetActive(speed == SpinSpeed.QuickSpin);
+        SetButtonActive(normalSpeedButton, normalSpeedButtonPortrait, speed == SpinSpeed.Normal);
+        SetButtonActive(turboSpeedButton, turboSpeedButtonPortrait, speed == SpinSpeed.Turbo);
+        SetButtonActive(quickSpeedButton, quickSpeedButtonPortrait, speed == SpinSpeed.QuickSpin);
     }
 
-    private void OnMusicToggleChanged(bool isOn)
+    #endregion
+
+    #region Sound Panel
+
+    private void OpenSoundPanel()
     {
         AudioManager.Instance?.PlayButton();
-        AudioManager.Instance?.SetMusicEnabled(isOn);
-        RefreshToggleBgAlpha(musicToggle);
+        if (soundPanel == null) return;
+        soundPanel.SetActive(true);
+        if (soundPanelRect != null)
+        {
+            AnimatePopupOpen(soundPanelRect);
+        }
+        if (musicSlider && AudioManager.Instance != null)
+        {
+            musicSlider.value = AudioManager.Instance.MusicVolume;
+        }
+        if (sfxSlider && AudioManager.Instance != null)
+        {
+            sfxSlider.value = AudioManager.Instance.SfxVolume;
+        }
     }
 
-    private void OnSfxToggleChanged(bool isOn)
+    private void CloseSoundPanel()
     {
-        AudioManager.Instance?.PlayButton();
-        AudioManager.Instance?.SetSfxEnabled(isOn);
-        RefreshToggleBgAlpha(sfxToggle);
+        if (soundPanel == null || !soundPanel.activeSelf) return;
+        if (soundPanelRect != null)
+        {
+            AnimatePopupClose(soundPanelRect, () =>
+            {
+                soundPanel.SetActive(false);
+            });
+        }
+        else
+        {
+            soundPanel.SetActive(false);
+        }
     }
 
-    private void RefreshAllToggleBgAlpha()
+    private void OnMusicSliderChanged(float val)
     {
-        RefreshToggleBgAlpha(musicToggle);
-        RefreshToggleBgAlpha(sfxToggle);
+        AudioManager.Instance?.SetMusicVolume(val);
     }
 
-    // Reads the background Image directly from Toggle.targetGraphic.
-    // Sets alpha to 0 when the toggle is ON so the checkmark is not obscured,
-    // and restores full alpha when the toggle is OFF.
-    private static void RefreshToggleBgAlpha(Toggle toggle)
+    private void OnSfxSliderChanged(float val)
     {
-        if (toggle == null) return;
-        Image bgImage = toggle.targetGraphic as Image;
-        if (bgImage == null) return;
-        Color c = bgImage.color;
-        c.a = toggle.isOn ? 0f : 1f;
-        bgImage.color = c;
+        AudioManager.Instance?.SetSfxVolume(val);
     }
 
     #endregion
@@ -808,17 +848,26 @@ public class UIManager : MonoBehaviour
 
     private void OpenSettingsPanel()
     {
-        if (autoPlayPanel && autoPlayPanel.activeSelf)
+        if ((autoPlayPanel && autoPlayPanel.activeSelf) || (autoPlayPanelPortrait && autoPlayPanelPortrait.activeSelf))
             CloseAutoPlayPanelImmediate();
+
+        SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, false);
+        SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, true);
 
         if (settingsPanel)
         {
-            if (settingsOpenButton) settingsOpenButton.gameObject.SetActive(false);
-            if (settingsCloseButton) settingsCloseButton.gameObject.SetActive(true);
-
             settingsPanel.SetActive(true);
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanel.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
+            cg.DOFade(1f, 0.35f);
+        }
+
+        if (settingsPanelPortrait)
+        {
+            settingsPanelPortrait.SetActive(true);
+            CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
+            if (cg == null) cg = settingsPanelPortrait.AddComponent<CanvasGroup>();
             cg.alpha = 0f;
             cg.DOFade(1f, 0.35f);
         }
@@ -826,11 +875,11 @@ public class UIManager : MonoBehaviour
 
     private void CloseSettingsPanel()
     {
+        SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
+        SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
+
         if (settingsPanel)
         {
-            if (settingsOpenButton) settingsOpenButton.gameObject.SetActive(true);
-            if (settingsCloseButton) settingsCloseButton.gameObject.SetActive(false);
-
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanel.AddComponent<CanvasGroup>();
             cg.DOFade(0f, 0.35f).OnComplete(() =>
@@ -838,28 +887,44 @@ public class UIManager : MonoBehaviour
                 settingsPanel.SetActive(false);
             });
         }
+
+        if (settingsPanelPortrait)
+        {
+            CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
+            if (cg == null) cg = settingsPanelPortrait.AddComponent<CanvasGroup>();
+            cg.DOFade(0f, 0.35f).OnComplete(() =>
+            {
+                settingsPanelPortrait.SetActive(false);
+            });
+        }
     }
 
     private void CloseSettingsPanelImmediate()
     {
+        SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
+        SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
+
         if (settingsPanel)
         {
-            if (settingsOpenButton) settingsOpenButton.gameObject.SetActive(true);
-            if (settingsCloseButton) settingsCloseButton.gameObject.SetActive(false);
-
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
             if (cg != null) cg.alpha = 0f;
             settingsPanel.SetActive(false);
+        }
+
+        if (settingsPanelPortrait)
+        {
+            CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
+            if (cg != null) cg.alpha = 0f;
+            settingsPanelPortrait.SetActive(false);
         }
     }
 
     private void CloseAutoPlayPanelImmediate()
     {
         if (autoPlayPanelRect) autoPlayPanelRect.localScale = Vector3.one;
-        if (autoPlayPanel) autoPlayPanel.SetActive(false);
+        if (autoPlayPanelRectPortrait) autoPlayPanelRectPortrait.localScale = Vector3.one;
+        SetGameObjectActive(autoPlayPanel, autoPlayPanelPortrait, false);
     }
-
-
 
     #endregion
 
@@ -867,7 +932,7 @@ public class UIManager : MonoBehaviour
 
     private void OpenGameRulesPanel()
     {
-        if (settingsPanel && settingsPanel.activeSelf)
+        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
         {
             CloseSettingsPanelImmediate();
         }
@@ -878,28 +943,37 @@ public class UIManager : MonoBehaviour
     {
         if (gameRulesPanel == null) return;
         gameRulesPanel.SetActive(true);
-        UpdateGameRulesDynamicTexts();
     }
 
     private void CloseGameRulesPanel()
     {
-        if (gameRulesPanel == null || !gameRulesPanel.activeSelf) return;
+        if (gameRulesPanel == null) return;
         gameRulesPanel.SetActive(false);
     }
 
     #endregion
 
-    #region Free Spins
+    #region Free Spins Flow
 
-    internal void OnFreeSpinsStarted(int spinsAwarded)
+    internal void OnFreeSpinsStarted(int spins)
     {
+        OnFreeSpinsTriggered(spins);
+    }
+
+    internal void OnFreeSpinsTriggered(int spinsAwarded)
+    {
+        ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, spinsAwarded, () =>
+        {
+            StartFreeSpinsSequence(spinsAwarded);
+        });
+    }
+
+    private void StartFreeSpinsSequence(int spinsAwarded)
+    {
+        totalFreeSpinWin = 0;
         initialFreeSpins = spinsAwarded;
         totalFreeSpinsAwarded = spinsAwarded;
-        currentWinDisplayValue = 0;
-        UpdateWinDisplay(0);
         
-        if (normalSpinBackground) normalSpinBackground.SetActive(false);
-        if (freeSpinBackground) freeSpinBackground.SetActive(true);
         if (gameLogoObject) gameLogoObject.SetActive(false);
 
         UpdateFreeSpinCount(0, spinsAwarded);
@@ -908,21 +982,17 @@ public class UIManager : MonoBehaviour
 
     internal void OnFreeSpinsEnded(double serverTotalRoundWin, int serverTotalSpinsUsed)
     {
-        // Reset free spin tracking
         initialFreeSpins = 0;
         totalFreeSpinsAwarded = 0;
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
 
-        // Show Free Spin Complete popup before switching backgrounds
         ShowUniversalWinPopup(WinPopupType.FreeSpinComplete, serverTotalRoundWin, 0, () =>
         {
-            if (freeSpinBackground) freeSpinBackground.SetActive(false);
-            if (normalSpinBackground) normalSpinBackground.SetActive(true);
             if (gameLogoObject) gameLogoObject.SetActive(true);
 
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-            if (settingsOpenButton) settingsOpenButton.interactable = true;
+            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
             SetBetControlsEnabled(true);
         });
     }
@@ -937,12 +1007,13 @@ public class UIManager : MonoBehaviour
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(true);
         if (remainingFreeSpinsText) remainingFreeSpinsText.text = $"FREE GAME  {playedSpins}  OF  {totalFreeSpinsAwarded}";
     }
+
     #endregion
+
     #region Expand / Shrink
 
     private void InitializeExpandShrink()
     {
-
         SetExpandShrinkButtons(isExpanded: false);
     }
 
@@ -960,23 +1031,22 @@ public class UIManager : MonoBehaviour
         SetExpandShrinkButtons(isExpanded: false);
     }
 
-
     private void SetExpandShrinkButtons(bool isExpanded)
     {
-        if (expandButton) expandButton.gameObject.SetActive(!isExpanded);
-        if (shrinkButton) shrinkButton.gameObject.SetActive(isExpanded);
+        SetButtonActive(expandButton, expandButtonPortrait, !isExpanded);
+        SetButtonActive(shrinkButton, shrinkButtonPortrait, isExpanded);
     }
 
     private void RegisterFullscreenListener()
     {
         jsFunctCalls?.RegisterFullscreenListener(gameObject.name);
     }
- internal void OnFullscreenChanged(string isFullscreen)
+
+    internal void OnFullscreenChanged(string isFullscreen)
     {
         bool newExpandedState = isFullscreen == "1";
         Debug.Log($"[UI] OnFullscreenChanged callback: isFullscreen={isFullscreen}, newState={newExpandedState}");
 
-        // Only update if state actually changed
         if (isExpanded != newExpandedState)
         {
             isExpanded = newExpandedState;
@@ -1018,27 +1088,23 @@ public class UIManager : MonoBehaviour
 
     internal void UpdateBalanceDisplay()
     {
-        if (balanceText)
-        {
-            balanceText.text = "BALANCE : " + gameManager.playerData.balance.ToString("F2");
-        }
+        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + gameManager.playerData.balance.ToString("F2"));
     }
 
     private void UpdateWinDisplay(double amount)
     {
         currentWinDisplayValue = amount;
-        if (winAmountText)
-            winAmountText.text = amount.ToString("F2");
-            
+        SetTMPText(winAmountText, winAmountTextPortrait, amount.ToString("F2"));
+
         if (amount > 0)
         {
-            if (goodLuckObject) goodLuckObject.SetActive(false);
-            if (winTextObject) winTextObject.SetActive(true);
+            SetGameObjectActive(goodLuckObject, goodLuckObjectPortrait, false);
+            SetGameObjectActive(winTextObject, winTextObjectPortrait, true);
         }
         else
         {
-            if (goodLuckObject) goodLuckObject.SetActive(true);
-            if (winTextObject) winTextObject.SetActive(false);
+            SetGameObjectActive(goodLuckObject, goodLuckObjectPortrait, true);
+            SetGameObjectActive(winTextObject, winTextObjectPortrait, false);
         }
     }
 
@@ -1047,14 +1113,12 @@ public class UIManager : MonoBehaviour
         if (balanceTween != null) balanceTween.Kill();
 
         hasOptimisticBalance = false;
-        
-        if (balanceText != null) balanceText.text = "BALANCE : " + newBalance.ToString("F2");
+        SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + newBalance.ToString("F2"));
     }
 
     private void AnimateWinUpdate(double winAmount)
     {
         if (winTween != null) winTween.Kill();
-
         UpdateWinDisplay(winAmount);
     }
 
@@ -1062,14 +1126,11 @@ public class UIManager : MonoBehaviour
 
     #region Helper Methods
 
-
     private void SetBetControlsEnabled(bool enabled)
     {
-        if (betPlusButton) betPlusButton.interactable = enabled;
-        if (betMinusButton) betMinusButton.interactable = enabled;
+        SetButtonInteractable(betPlusButton, betPlusButtonPortrait, enabled);
+        SetButtonInteractable(betMinusButton, betMinusButtonPortrait, enabled);
     }
-
-
 
     #endregion
 
@@ -1084,7 +1145,6 @@ public class UIManager : MonoBehaviour
             totalLineCountText.text = gameManager.gameConfig.paylineCount.ToString();
         }
 
-        // "5 - (currentbetamout*thatmultiper ) \n 4 - (currentbetamout*thatmultiper ) \n 3 - (currentbetamout*multiper )"
         TMP_Text[] symbolTexts = {
             ruleSymbol0Text, ruleSymbol1Text, ruleSymbol2Text, ruleSymbol3Text,
             ruleSymbol4Text, ruleSymbol5Text, ruleSymbol6Text, ruleSymbol7Text,
@@ -1097,7 +1157,6 @@ public class UIManager : MonoBehaviour
             {
                 if (symbolTexts[i] == null) continue;
 
-                // Find symbol by id
                 var symbol = gameManager.gameConfig.symbols.Find(s => s.id == i);
                 if (symbol != null && symbol.multipliers != null && symbol.multipliers.Count > 0)
                 {
@@ -1123,7 +1182,6 @@ public class UIManager : MonoBehaviour
 
     #endregion
 
-
     #region Cleanup
 
     private void OnDestroy()
@@ -1136,7 +1194,6 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region Connection Popup Management
-
 
     private void OnExitButtonPressed()
     {
@@ -1158,7 +1215,7 @@ public class UIManager : MonoBehaviour
     {
         if (wheelSpinTriggered) return;
         wheelSpinTriggered = true;
-        if (wheelSpinButton) wheelSpinButton.interactable = false;
+        SetButtonInteractable(wheelSpinButton, wheelSpinButtonPortrait, false);
     }
 
     private IEnumerator USpinBonusSequence(USpinResultData resultData, System.Action onComplete)
@@ -1177,13 +1234,10 @@ public class UIManager : MonoBehaviour
         
         // Hide normal spin/stop buttons, show wheel spin button
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
-        if (spinButton) spinButton.gameObject.SetActive(false);
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
-        if (wheelSpinButton) 
-        {
-            wheelSpinButton.gameObject.SetActive(true);
-            wheelSpinButton.interactable = true;
-        }
+        SetButtonActive(spinButton, spinButtonPortrait, false);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+        SetButtonActive(wheelSpinButton, wheelSpinButtonPortrait, true);
+        SetButtonInteractable(wheelSpinButton, wheelSpinButtonPortrait, true);
 
         // 3. Fade out back film
         if (transitionBackFilm != null)
@@ -1213,7 +1267,6 @@ public class UIManager : MonoBehaviour
         // 6. Handle the two possibilities
         if (resultData.type == "FREE_GAMES")
         {
-            // Show Free Spin Trigger popup on the wheel screen
             bool takePressed = false;
             ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
             {
@@ -1221,7 +1274,6 @@ public class UIManager : MonoBehaviour
             });
             yield return new WaitUntil(() => takePressed);
 
-            // Update free spin count and total spins ONLY AFTER user presses Take button!
             if (gameManager != null && gameManager.isInFreeSpins)
             {
                 gameManager.freeSpinsRemaining += resultData.freeGamesAwarded;
@@ -1229,7 +1281,6 @@ public class UIManager : MonoBehaviour
                 UpdateFreeSpinCount(gameManager.freeSpinsUsed, updatedTotalSpins);
             }
 
-            // Transition back
             if (transitionBackFilm != null)
             {
                 transitionBackFilm.gameObject.SetActive(true);
@@ -1248,7 +1299,6 @@ public class UIManager : MonoBehaviour
         }
         else // MULTIPLIER / CREDITS
         {
-            // Show credits win via universal popup with Take button
             bool takePressed = false;
             ShowUniversalWinPopup(WinPopupType.RegularWin, resultData.winInCash, 0, () =>
             {
@@ -1256,7 +1306,6 @@ public class UIManager : MonoBehaviour
             });
             yield return new WaitUntil(() => takePressed);
 
-            // Update credit balance and win display ONLY AFTER user presses Take button!
             if (gameManager != null && gameManager.lastResult != null)
             {
                 double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
@@ -1264,7 +1313,6 @@ public class UIManager : MonoBehaviour
                 AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
             }
             
-            // Transition back
             if (transitionBackFilm != null)
             {
                 transitionBackFilm.gameObject.SetActive(true);
@@ -1282,9 +1330,7 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        if (wheelSpinButton) wheelSpinButton.gameObject.SetActive(false);
-
-        // Restore normal spin button state before completing
+        SetButtonActive(wheelSpinButton, wheelSpinButtonPortrait, false);
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
 
         onComplete?.Invoke();
@@ -1297,7 +1343,6 @@ public class UIManager : MonoBehaviour
 
     private IEnumerator MoneyBagBonusSequence(MoneyBagResultData resultData, System.Action onComplete)
     {
-        // 1. Fade in back film
         if (transitionBackFilm != null)
         {
             transitionBackFilm.gameObject.SetActive(true);
@@ -1306,20 +1351,17 @@ public class UIManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
         
-        // Hide normal spin/stop buttons
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
-        if (spinButton) spinButton.gameObject.SetActive(false);
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
+        SetButtonActive(spinButton, spinButtonPortrait, false);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
 
         bool moneyBagDone = false;
         
         if (moneyBagController != null)
         {
-            // Activate and prepare MoneyBag interactive screen BEFORE fading out film
             moneyBagController.gameObject.SetActive(true);
             moneyBagController.StartMoneyBagBonus(resultData, () => moneyBagDone = true);
 
-            // 2. Fade out back film
             if (transitionBackFilm != null)
             {
                 yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
@@ -1328,7 +1370,6 @@ public class UIManager : MonoBehaviour
 
             yield return new WaitUntil(() => moneyBagDone);
 
-            // Show Money Bag Collect popup with Take button
             bool takePressed = false;
             ShowUniversalWinPopup(WinPopupType.MoneyBagCollect, resultData.winInCash, 0, () =>
             {
@@ -1336,7 +1377,6 @@ public class UIManager : MonoBehaviour
             });
             yield return new WaitUntil(() => takePressed);
 
-            // Update credit balance and win display ONLY AFTER user presses Take button!
             if (gameManager != null && gameManager.lastResult != null)
             {
                 double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
@@ -1344,7 +1384,6 @@ public class UIManager : MonoBehaviour
                 AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
             }
             
-            // Transition back
             if (transitionBackFilm != null)
             {
                 transitionBackFilm.gameObject.SetActive(true);
@@ -1365,7 +1404,6 @@ public class UIManager : MonoBehaviour
             transitionBackFilm.gameObject.SetActive(false);
         }
 
-        // Restore normal spin button state before completing
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
 
         onComplete?.Invoke();
@@ -1375,17 +1413,12 @@ public class UIManager : MonoBehaviour
 
     #region Universal Win Popup
 
-    /// <summary>
-    /// Shows the universal win popup configured for the given type.
-    /// The popup remains open until the player presses the Take button.
-    /// </summary>
     internal void ShowUniversalWinPopup(WinPopupType type, double winAmount, int freeSpinCount = 0, System.Action onTakePressed = null)
     {
         if (universalWinPopup == null) return;
 
         universalWinPopupCallback = onTakePressed;
 
-        // Hide all optional elements first
         if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(false);
         if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(false);
         if (uwpBigWinTitle) uwpBigWinTitle.SetActive(false);
@@ -1393,7 +1426,6 @@ public class UIManager : MonoBehaviour
         if (uwpFreeSpinCountText) uwpFreeSpinCountText.gameObject.SetActive(false);
         if (uwpFreeSpinObject) uwpFreeSpinObject.SetActive(false);
 
-        // Configure elements based on popup type
         switch (type)
         {
             case WinPopupType.FreeSpinTrigger:
@@ -1423,7 +1455,6 @@ public class UIManager : MonoBehaviour
                 {
                     uwpWinAmountText.gameObject.SetActive(true);
                     uwpWinAmountText.text = winAmount.ToString("F2");
-                    // BigWin: win amount text at Y = 0
                     RectTransform bigWinAmountRect = uwpWinAmountText.GetComponent<RectTransform>();
                     if (bigWinAmountRect != null)
                     {
@@ -1455,7 +1486,6 @@ public class UIManager : MonoBehaviour
                 break;
         }
 
-        // For non-BigWin types, set win amount text Y to -90
         if (type != WinPopupType.BigWin && uwpWinAmountText)
         {
             RectTransform winAmountRect = uwpWinAmountText.GetComponent<RectTransform>();
@@ -1467,17 +1497,12 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        // Hide spin/stop buttons and show Take button
-        if (spinButton) spinButton.gameObject.SetActive(false);
-        if (stopButton) stopButton.gameObject.SetActive(false);
-        if (autoSpinStopButton) autoSpinStopButton.gameObject.SetActive(false);
-        if (uwpTakeButton)
-        {
-            uwpTakeButton.gameObject.SetActive(true);
-            uwpTakeButton.interactable = true;
-        }
+        SetButtonActive(spinButton, spinButtonPortrait, false);
+        SetButtonActive(stopButton, stopButtonPortrait, false);
+        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+        SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, true);
+        SetButtonInteractable(uwpTakeButton, uwpTakeButtonPortrait, true);
 
-        // Show the popup and animate scale: 0 → 1.2 → 1
         universalWinPopup.SetActive(true);
         if (universalWinPopupRect)
         {
@@ -1487,7 +1512,6 @@ public class UIManager : MonoBehaviour
             openSeq.Append(universalWinPopupRect.DOScale(1f, 0.15f).SetEase(Ease.InOutSine));
         }
 
-        // Start auto-close timer
         if (uwpAutoCloseCoroutine != null) StopCoroutine(uwpAutoCloseCoroutine);
         uwpAutoCloseCoroutine = StartCoroutine(AutoCloseUniversalWinPopup());
     }
@@ -1499,15 +1523,10 @@ public class UIManager : MonoBehaviour
         CloseUniversalWinPopup();
     }
 
-    /// <summary>
-    /// Closes the universal win popup and invokes the stored callback.
-    /// Called by the Take button.
-    /// </summary>
     private void CloseUniversalWinPopup()
     {
         if (universalWinPopup == null || !universalWinPopup.activeSelf) return;
 
-        // Cancel auto-close timer if Take was pressed manually
         if (uwpAutoCloseCoroutine != null)
         {
             StopCoroutine(uwpAutoCloseCoroutine);
@@ -1517,10 +1536,8 @@ public class UIManager : MonoBehaviour
         System.Action callback = universalWinPopupCallback;
         universalWinPopupCallback = null;
 
-        // Make Take button non-interactable during close animation (keep visible)
-        if (uwpTakeButton) uwpTakeButton.interactable = false;
+        SetButtonInteractable(uwpTakeButton, uwpTakeButtonPortrait, false);
 
-        // Animate close
         if (universalWinPopupRect)
         {
             Sequence closeSeq = DOTween.Sequence();
@@ -1531,9 +1548,8 @@ public class UIManager : MonoBehaviour
                 universalWinPopupRect.localScale = Vector3.one;
                 universalWinPopup.SetActive(false);
 
-                // Restore spin button first, then hide Take button
                 SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-                if (uwpTakeButton) uwpTakeButton.gameObject.SetActive(false);
+                SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, false);
 
                 callback?.Invoke();
             });
@@ -1542,7 +1558,7 @@ public class UIManager : MonoBehaviour
         {
             universalWinPopup.SetActive(false);
             SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-            if (uwpTakeButton) uwpTakeButton.gameObject.SetActive(false);
+            SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, false);
             callback?.Invoke();
         }
     }
