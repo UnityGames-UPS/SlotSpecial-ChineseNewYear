@@ -18,6 +18,8 @@ public class OCController : MonoBehaviour
     [Header("Background Toggle Settings")]
     [SerializeField] private GameObject landscapeBackground;
     [SerializeField] private GameObject portraitBackground;
+    [SerializeField] private GameObject wheelLandscapeBackground;
+    [SerializeField] private GameObject wheelPortraitBackground;
 
     [Header("Canvas Scaler Resolutions")]
     [SerializeField] private Vector2 landscapeReferenceResolution = new Vector2(1920f, 1080f);
@@ -100,6 +102,16 @@ public class OCController : MonoBehaviour
         if (portraitBackground != null)
         {
             portraitBackground.SetActive(isMobilePortrait);
+        }
+
+        // Toggle Wheel Landscape vs Portrait Background Objects
+        if (wheelLandscapeBackground != null)
+        {
+            wheelLandscapeBackground.SetActive(!isMobilePortrait);
+        }
+        if (wheelPortraitBackground != null)
+        {
+            wheelPortraitBackground.SetActive(isMobilePortrait);
         }
 
         // 3. Update Canvas Scaler Reference Resolution

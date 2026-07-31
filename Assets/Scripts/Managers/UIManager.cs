@@ -42,8 +42,14 @@ public class UIManager : MonoBehaviour
     [Header("Bonus Wheel")]
     [SerializeField] private WheelSpinController mainWheel;
     [SerializeField] private GameObject wheelScreen;
+    [SerializeField] private GameObject wheelLandscapeBackground;
+    [SerializeField] private GameObject wheelPortraitBackground;
     [SerializeField] private Button wheelSpinButton;
     [SerializeField] private CanvasGroup transitionBackFilm;
+    [SerializeField] private StarFountain wheelCoinFountain;
+    [SerializeField] private Transform wheelAnticlockwiseRotatingObject;
+    [SerializeField] private float wheelRotationDuration = 8f;
+    private Tween wheelAnticlockwiseRotationTween;
     [Header("Bonus Wheel - Portrait")]
     [SerializeField] private Button wheelSpinButtonPortrait;
     
@@ -62,6 +68,8 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button uwpTakeButton;
     [Header("Universal Win Popup - Portrait")]
     [SerializeField] private Button uwpTakeButtonPortrait;
+    [Header("Universal Win Popup - Star Particle Burst")]
+    [SerializeField] private StarFountain starFountain;
 
     [Header("Spin Button")]
     [SerializeField] private Button spinButton;
@@ -202,6 +210,7 @@ public class UIManager : MonoBehaviour
     // Universal Win Popup state
     private System.Action universalWinPopupCallback;
     private Coroutine uwpAutoCloseCoroutine;
+    private Tween uwpWinTween;
     [SerializeField] private float uwpAutoCloseDelay = 3f;
 
     private void Awake()
@@ -209,6 +218,29 @@ public class UIManager : MonoBehaviour
         if (jsFunctCalls != null)
         {
             jsFunctCalls.RegisterVisibilityListener(gameObject.name);
+        }
+    }
+
+    private void Update()
+    {
+        // Test shortcut 1: Press 1 to trigger Big Win scenario with win amount 6
+        if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1))
+        {
+            ShowUniversalWinPopup(WinPopupType.BigWin, 6);
+        }
+
+        // Test shortcut 2: Press 2 to enable Wheel Bonus screen + coin fountain + anticlockwise rotating object
+        if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2))
+        {
+            if (wheelScreen != null) wheelScreen.SetActive(true);
+            StartWheelBonusEffects();
+        }
+
+        // Test shortcut 3: Press 3 to close Wheel Bonus screen + stop coin fountain & rotating object
+        if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3))
+        {
+            StopWheelBonusEffects();
+            if (wheelScreen != null) wheelScreen.SetActive(false);
         }
     }
 
@@ -220,6 +252,34 @@ public class UIManager : MonoBehaviour
         if (gameManager != null && gameManager.socketManager != null)
         {
             gameManager.socketManager.HandleFocusChange(focused);
+        }
+    }
+
+    private void OnEnable()
+    {
+        OrientationChange.OnOrientationChanged += HandleOrientationChange;
+    }
+
+    private void OnDisable()
+    {
+        OrientationChange.OnOrientationChanged -= HandleOrientationChange;
+    }
+
+    private void HandleOrientationChange(OrientationChange.OrientationMode mode, int width, int height)
+    {
+        UpdateWheelBackgrounds(mode);
+    }
+
+    internal void UpdateWheelBackgrounds(OrientationChange.OrientationMode mode)
+    {
+        bool isMobilePortrait = (mode == OrientationChange.OrientationMode.MobilePortrait);
+        if (wheelLandscapeBackground != null)
+        {
+            wheelLandscapeBackground.SetActive(!isMobilePortrait);
+        }
+        if (wheelPortraitBackground != null)
+        {
+            wheelPortraitBackground.SetActive(isMobilePortrait);
         }
     }
 
@@ -253,9 +313,12 @@ public class UIManager : MonoBehaviour
         SetGameObjectActive(settingsPanel, settingsPanelPortrait, false);
         if (gameRulesPanel) gameRulesPanel.SetActive(false);
         if (guidePanel) guidePanel.SetActive(false);
+        if (uwpWinTween != null) { uwpWinTween.Kill(); uwpWinTween = null; }
+        if (starFountain != null) starFountain.StopStarBurst();
         if (universalWinPopup) universalWinPopup.SetActive(false);
 
         if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
+        StopWheelBonusEffects();
         if (wheelScreen) wheelScreen.SetActive(false);
         if (transitionBackFilm) transitionBackFilm.gameObject.SetActive(false);
     }
@@ -1351,6 +1414,7 @@ public class UIManager : MonoBehaviour
         
         // 2. Open spin wheel screen
         if (wheelScreen) wheelScreen.SetActive(true);
+        StartWheelBonusEffects();
         
         // Hide normal spin/stop buttons, show wheel spin button
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
@@ -1405,6 +1469,7 @@ public class UIManager : MonoBehaviour
             }
             
             // Turn off wheel screen behind blackfilm
+            StopWheelBonusEffects();
             if (wheelScreen) wheelScreen.SetActive(false);
             
             // Setup free spin mode/UI behind blackfilm
@@ -1469,6 +1534,7 @@ public class UIManager : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
             
+            StopWheelBonusEffects();
             if (wheelScreen) wheelScreen.SetActive(false);
             
             if (transitionBackFilm != null)
@@ -1580,6 +1646,12 @@ public class UIManager : MonoBehaviour
         isSpecialWinActive = true;
         universalWinPopupCallback = onTakePressed;
 
+        if (uwpWinTween != null)
+        {
+            uwpWinTween.Kill();
+            uwpWinTween = null;
+        }
+
         if (uwpCongratulationsTitle) uwpCongratulationsTitle.SetActive(false);
         if (uwpYouWonSubtitle) uwpYouWonSubtitle.SetActive(false);
         if (uwpBigWinTitle) uwpBigWinTitle.SetActive(false);
@@ -1675,8 +1747,44 @@ public class UIManager : MonoBehaviour
             openSeq.Append(universalWinPopupRect.DOScale(1f, 0.15f).SetEase(Ease.InOutSine));
         }
 
+        if (starFountain != null) starFountain.PlayStarBurst();
+
+        if (uwpWinAmountText != null && uwpWinAmountText.gameObject.activeSelf && winAmount > 0)
+        {
+            int decimals = GetDecimalPlaces(winAmount);
+            string formatStr = decimals > 0 ? "0." + new string('0', decimals) : "0";
+
+            uwpWinAmountText.text = (0.0).ToString(formatStr);
+
+            float countUpDuration = (type == WinPopupType.BigWin) ? 1.5f : 1.0f;
+
+            uwpWinTween = DOVirtual.Float(0f, (float)winAmount, countUpDuration, (val) =>
+            {
+                if (uwpWinAmountText != null)
+                {
+                    uwpWinAmountText.text = val.ToString(formatStr);
+                }
+            }).OnComplete(() =>
+            {
+                if (uwpWinAmountText != null)
+                {
+                    uwpWinAmountText.text = FormatAmount(winAmount);
+                }
+                uwpWinTween = null;
+            });
+        }
+
         if (uwpAutoCloseCoroutine != null) StopCoroutine(uwpAutoCloseCoroutine);
         uwpAutoCloseCoroutine = StartCoroutine(AutoCloseUniversalWinPopup());
+    }
+
+    private int GetDecimalPlaces(double amount)
+    {
+        double rounded = System.Math.Round(amount, 4);
+        string str = rounded.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        int dotIndex = str.IndexOf('.');
+        if (dotIndex < 0) return 0;
+        return str.Length - dotIndex - 1;
     }
 
     private IEnumerator AutoCloseUniversalWinPopup()
@@ -1689,6 +1797,14 @@ public class UIManager : MonoBehaviour
     private void CloseUniversalWinPopup()
     {
         if (universalWinPopup == null || !universalWinPopup.activeSelf) return;
+
+        if (uwpWinTween != null)
+        {
+            uwpWinTween.Kill();
+            uwpWinTween = null;
+        }
+
+        if (starFountain != null) starFountain.StopStarBurst();
 
         if (uwpAutoCloseCoroutine != null)
         {
@@ -1726,6 +1842,53 @@ public class UIManager : MonoBehaviour
             EnableControlsAfterWinAnimation();
 
             callback?.Invoke();
+        }
+    }
+
+    #endregion
+
+    #region Bonus Wheel Effects
+
+    internal void StartWheelBonusEffects()
+    {
+        var oc = Object.FindFirstObjectByType<OrientationChange>();
+        if (oc != null)
+        {
+            UpdateWheelBackgrounds(oc.CurrentMode);
+        }
+
+        if (wheelCoinFountain != null)
+        {
+            wheelCoinFountain.PlayStarBurst();
+        }
+
+        if (wheelAnticlockwiseRotatingObject != null)
+        {
+            if (wheelAnticlockwiseRotationTween != null)
+            {
+                wheelAnticlockwiseRotationTween.Kill();
+                wheelAnticlockwiseRotationTween = null;
+            }
+
+            // Continuous anticlockwise rotation (positive Z rotation 0 to 360 degrees)
+            wheelAnticlockwiseRotationTween = wheelAnticlockwiseRotatingObject
+                .DORotate(new Vector3(0f, 0f, 360f), wheelRotationDuration, RotateMode.FastBeyond360)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Incremental);
+        }
+    }
+
+    internal void StopWheelBonusEffects()
+    {
+        if (wheelCoinFountain != null)
+        {
+            wheelCoinFountain.StopStarBurst();
+        }
+
+        if (wheelAnticlockwiseRotationTween != null)
+        {
+            wheelAnticlockwiseRotationTween.Kill();
+            wheelAnticlockwiseRotationTween = null;
         }
     }
 
