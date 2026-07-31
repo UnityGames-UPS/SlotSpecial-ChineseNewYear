@@ -995,7 +995,7 @@ public class SlotView : MonoBehaviour
             {
                 tmpText.text = winAmount.ToString("0.###");
             }
-            textTransform.gameObject.SetActive(true);
+            AnimateTextScaleAppear(textTransform);
         }
     }
 
@@ -1013,6 +1013,8 @@ public class SlotView : MonoBehaviour
                         Transform textTransform = image.transform.Find("WinLineText");
                         if (textTransform != null)
                         {
+                            textTransform.DOKill();
+                            textTransform.localScale = Vector3.one;
                             textTransform.gameObject.SetActive(false);
                         }
                     }
@@ -1026,13 +1028,31 @@ public class SlotView : MonoBehaviour
         if (phase1TotalWinText != null)
         {
             phase1TotalWinText.text = totalWinAmount.ToString("0.###");
-            phase1TotalWinText.gameObject.SetActive(true);
+            AnimateTextScaleAppear(phase1TotalWinText.transform);
         }
     }
 
     private void HidePhase1TotalWinText()
     {
-        if (phase1TotalWinText != null) phase1TotalWinText.gameObject.SetActive(false);
+        if (phase1TotalWinText != null)
+        {
+            phase1TotalWinText.transform.DOKill();
+            phase1TotalWinText.transform.localScale = Vector3.one;
+            phase1TotalWinText.gameObject.SetActive(false);
+        }
+    }
+
+    private void AnimateTextScaleAppear(Transform textTransform, float popScale = 1.2f, float durationUp = 0.15f, float durationDown = 0.10f)
+    {
+        if (textTransform == null) return;
+        textTransform.DOKill();
+        textTransform.localScale = Vector3.zero;
+        textTransform.gameObject.SetActive(true);
+
+        Sequence seq = DOTween.Sequence();
+        seq.Append(textTransform.DOScale(popScale, durationUp).SetEase(Ease.OutQuad));
+        seq.Append(textTransform.DOScale(1.0f, durationDown).SetEase(Ease.InQuad));
+        winTweens.Add(seq);
     }
     private void EnableWinBox(int col, int row)
     {

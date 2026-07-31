@@ -159,8 +159,12 @@ public class GameManager : MonoBehaviour
         currentState = GameState.Spinning;
         stopRequested = false;
 
-        // Server handles spin counting - we just display what server sends
-        // No client-side freeSpinsUsed++ or freeSpinsRemaining-- here
+        // Deduct total pay from balance on spin start (except in free spins)
+        if (!isInFreeSpins)
+        {
+            playerData.balance -= GetTotalPay();
+            if (playerData.balance < 0) playerData.balance = 0;
+        }
 
         uiManager.OnSpinStarted();
 
@@ -226,7 +230,12 @@ public class GameManager : MonoBehaviour
 
     private void OnReelsStoppedComplete()
     {
-        if (lastResult.winAmount > 0 && lastResult.winLines != null && lastResult.winLines.Count > 0)
+        if (lastResult != null)
+        {
+            playerData = lastResult.playerData;
+        }
+
+        if (lastResult != null && lastResult.winAmount > 0 && lastResult.winLines != null && lastResult.winLines.Count > 0)
         {
             double totalPay = GetTotalPay();
             double multiplier = totalPay > 0 ? (lastResult.winAmount / totalPay) : 0;

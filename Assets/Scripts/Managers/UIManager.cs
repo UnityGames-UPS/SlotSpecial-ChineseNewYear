@@ -504,6 +504,9 @@ public class UIManager : MonoBehaviour
             SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, false);
         }
 
+        UpdateBalanceDisplay();
+        UpdateWinDisplay(0);
+
         CloseSettingsPanelImmediate();
         CloseAutoPlayPanelImmediate();
     }
@@ -529,7 +532,8 @@ public class UIManager : MonoBehaviour
         UpdateBalanceDisplay();
         if (result != null)
         {
-            UpdateWinDisplay(result.winAmount);
+            double displayWin = (gameManager != null && gameManager.isInFreeSpins) ? result.serverTotalRoundWin : result.winAmount;
+            UpdateWinDisplay(displayWin);
         }
     }
 
@@ -537,7 +541,8 @@ public class UIManager : MonoBehaviour
     {
         if (result != null)
         {
-            UpdateWinDisplay(result.winAmount);
+            double displayWin = (gameManager != null && gameManager.isInFreeSpins) ? result.serverTotalRoundWin : result.winAmount;
+            UpdateWinDisplay(displayWin);
         }
         UpdateBalanceDisplay();
 
@@ -1044,16 +1049,40 @@ public class UIManager : MonoBehaviour
         initialFreeSpins = 0;
         totalFreeSpinsAwarded = 0;
 
-        if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
-
         ShowUniversalWinPopup(WinPopupType.FreeSpinComplete, serverTotalRoundWin, 0, () =>
         {
-            if (gameLogoObject) gameLogoObject.SetActive(true);
-
-            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
-            SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
-            SetBetControlsEnabled(true);
+            StartCoroutine(EndFreeSpinsTransitionSequence());
         });
+    }
+
+    private IEnumerator EndFreeSpinsTransitionSequence()
+    {
+        // 1. Fade in back film
+        if (transitionBackFilm != null)
+        {
+            transitionBackFilm.gameObject.SetActive(true);
+            transitionBackFilm.alpha = 0f;
+            yield return transitionBackFilm.DOFade(1f, 0.5f).WaitForCompletion();
+            yield return new WaitForSeconds(0.2f);
+        }
+
+        // 2. Setup main slot UI state behind back film
+        if (freeSpinCountContainer) freeSpinCountContainer.SetActive(false);
+        if (gameLogoObject) gameLogoObject.SetActive(true);
+
+        // Reset win display for base game after free spins end
+        UpdateWinDisplay(0);
+
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
+        SetBetControlsEnabled(true);
+
+        // 3. Fade out back film
+        if (transitionBackFilm != null)
+        {
+            yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
+            transitionBackFilm.gameObject.SetActive(false);
+        }
     }
 
     internal void UpdateFreeSpinCount(int playedSpins, int totalSpins = -1)
@@ -1339,24 +1368,15 @@ public class UIManager : MonoBehaviour
         // 6. Handle the two possibilities
         if (resultData.type == "FREE_GAMES")
         {
-            if (gameManager != null && gameManager.isInFreeSpins)
+            // Show freespin trigger popup BEFORE backfilm transition
+            bool takePressed = false;
+            ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
             {
-                bool takePressed = false;
-                ShowUniversalWinPopup(WinPopupType.FreeSpinTrigger, 0, resultData.freeGamesAwarded, () =>
-                {
-                    takePressed = true;
-                });
-                yield return new WaitUntil(() => takePressed);
+                takePressed = true;
+            });
+            yield return new WaitUntil(() => takePressed);
 
-                gameManager.freeSpinsRemaining += resultData.freeGamesAwarded;
-                int updatedTotalSpins = totalFreeSpinsAwarded + resultData.freeGamesAwarded;
-                UpdateFreeSpinCount(gameManager.freeSpinsUsed, updatedTotalSpins);
-            }
-            else
-            {
-                yield return new WaitForSeconds(0.5f);
-            }
-
+            // Blackfilm transition fade in to cover the screen
             if (transitionBackFilm != null)
             {
                 transitionBackFilm.gameObject.SetActive(true);
@@ -1365,8 +1385,41 @@ public class UIManager : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
             }
             
+            // Turn off wheel screen behind blackfilm
             if (wheelScreen) wheelScreen.SetActive(false);
             
+            // Setup free spin mode/UI behind blackfilm
+            if (gameManager != null)
+            {
+                if (gameManager.isInFreeSpins)
+                {
+                    gameManager.freeSpinsRemaining += resultData.freeGamesAwarded;
+                    int updatedTotalSpins = totalFreeSpinsAwarded + resultData.freeGamesAwarded;
+                    UpdateFreeSpinCount(gameManager.freeSpinsUsed, updatedTotalSpins);
+                }
+                else
+                {
+                    gameManager.isInFreeSpins = true;
+                    gameManager.freeSpinsRemaining = resultData.freeGamesAwarded;
+                    gameManager.freeSpinsUsed = 0;
+                    initialFreeSpins = resultData.freeGamesAwarded;
+                    totalFreeSpinsAwarded = resultData.freeGamesAwarded;
+                    
+                    if (gameLogoObject) gameLogoObject.SetActive(false);
+                    UpdateFreeSpinCount(0, resultData.freeGamesAwarded);
+                    
+                    SetSpinStopButtonStates(isSpinningState: true, isInteractable: false);
+                    SetBetControlsEnabled(false);
+                    SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, false);
+
+                    if (gameManager.lastResult != null && gameManager.lastResult.freeSpinData != null)
+                    {
+                        gameManager.lastResult.freeSpinData.isTriggered = false;
+                    }
+                }
+            }
+
+            // Blackfilm transition fade out revealing free spin setup
             if (transitionBackFilm != null)
             {
                 yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
@@ -1407,7 +1460,14 @@ public class UIManager : MonoBehaviour
         }
 
         SetButtonActive(wheelSpinButton, wheelSpinButtonPortrait, false);
-        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        if (gameManager == null || !gameManager.isInFreeSpins)
+        {
+            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        }
+        else
+        {
+            SetSpinStopButtonStates(isSpinningState: true, isInteractable: false);
+        }
 
         onComplete?.Invoke();
     }

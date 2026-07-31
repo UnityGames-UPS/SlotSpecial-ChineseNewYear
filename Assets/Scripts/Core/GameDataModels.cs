@@ -683,7 +683,7 @@ public static class InitDataConverter
 
     private static double CalculateNewBalance(double currentBalance, double totalPay, double winAmount)
     {
-        return currentBalance - totalPay + winAmount;
+        return currentBalance + winAmount;
     }
 }
 

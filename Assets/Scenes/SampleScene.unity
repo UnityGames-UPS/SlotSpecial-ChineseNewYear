@@ -15126,7 +15126,6 @@ GameObject:
   - component: {fileID: 726493339}
   - component: {fileID: 726493341}
   - component: {fileID: 726493340}
-  - component: {fileID: 726493342}
   m_Layer: 5
   m_Name: BonusSpin
   m_TagString: Untagged
@@ -15192,19 +15191,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 726493338}
   m_CullTransparentMesh: 1
---- !u!114 &726493342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 726493338}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
-  m_ShowMaskGraphic: 0
 --- !u!1 &731576408
 GameObject:
   m_ObjectHideFlags: 0
@@ -23686,7 +23672,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f521a04de7f494272a617b2719edd271, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SocketIOManager
-  testToken: d958e75aeaba4ec18d2104e8cf0ca994
+  testToken: 158847fa39f84c6b96107000ef1ec05b
   gameManager: {fileID: 1206269883}
   uiManager: {fileID: 885496184}
   popupManager: {fileID: 1363796882}
