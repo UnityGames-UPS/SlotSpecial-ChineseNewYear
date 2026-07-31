@@ -105,12 +105,14 @@ public class UIManager : MonoBehaviour
     [SerializeField] private RectTransform settingsPanelRect;
     [SerializeField] private Button settingsOpenButton;
     [SerializeField] private Button settingsCloseButton;
+    [SerializeField] private Button settingsBgCloseButton;
     [SerializeField] private Button gameQuitButton;
     [Header("Settings Panel - Portrait")]
     [SerializeField] private GameObject settingsPanelPortrait;
     [SerializeField] private RectTransform settingsPanelRectPortrait;
     [SerializeField] private Button settingsOpenButtonPortrait;
     [SerializeField] private Button settingsCloseButtonPortrait;
+    [SerializeField] private Button settingsBgCloseButtonPortrait;
     [SerializeField] private Button gameQuitButtonPortrait;
 
     [Header("Speed Buttons (Three-Layer Toggle)")]
@@ -429,9 +431,18 @@ public class UIManager : MonoBehaviour
             AudioManager.Instance?.PlayButton(); 
             CloseSettingsPanel(); 
         });
+        if (settingsBgCloseButton) settingsBgCloseButton.onClick.AddListener(() => { 
+            AudioManager.Instance?.PlayButton(); 
+            CloseSettingsPanel(); 
+        });
+        if (settingsBgCloseButtonPortrait) settingsBgCloseButtonPortrait.onClick.AddListener(() => { 
+            AudioManager.Instance?.PlayButton(); 
+            CloseSettingsPanel(); 
+        });
 
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
+        SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, false);
 
         // Sound panel buttons & sliders
         if (soundPanelOpenButton) soundPanelOpenButton.onClick.AddListener(OpenSoundPanel);
@@ -873,6 +884,7 @@ public class UIManager : MonoBehaviour
 
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, false);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, true);
+        SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, true);
 
         if (settingsPanel)
         {
@@ -897,6 +909,7 @@ public class UIManager : MonoBehaviour
     {
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
+        SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, false);
 
         if (settingsPanel)
         {
@@ -923,6 +936,7 @@ public class UIManager : MonoBehaviour
     {
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
+        SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, false);
 
         if (settingsPanel)
         {
@@ -1218,7 +1232,7 @@ public class UIManager : MonoBehaviour
                     for (int m = 0; m < symbol.multipliers.Count; m++)
                     {
                         double win = symbol.multipliers[m];
-                        string line = $"{currentMatch} - {win.ToString("0.###")}";
+                        string line = $"{currentMatch}     {win.ToString("0.###")}";
                         if (m == 0) fullText = line;
                         else fullText += $"\n{line}";
                         
@@ -1248,7 +1262,14 @@ public class UIManager : MonoBehaviour
 
     private void OnExitButtonPressed()
     {
-        if (gameManager != null) gameManager.ExitGame();
+        if (popupManager != null)
+        {
+            popupManager.ShowExitGamePopup();
+        }
+        else if (gameManager != null)
+        {
+            gameManager.ExitGame();
+        }
     }
 
     #endregion

@@ -35,6 +35,12 @@ public class PopupManager : MonoBehaviour
     [SerializeField] private Image loadingRotatingImage;
     [SerializeField] private TextMeshProUGUI loadingAnimatedText;
 
+    [Header("5. Exit Game Popup")]
+    [SerializeField] private GameObject exitGamePopup;
+    [SerializeField] private RectTransform exitGamePopupRect;
+    [SerializeField] private Button exitGameYesButton;
+    [SerializeField] private Button exitGameNoButton;
+
     [Header("Animation Settings")]
     [SerializeField] private float popupScaleInDuration = 0.3f;
     [SerializeField] private float popupScaleOutDuration = 0.2f;
@@ -82,6 +88,16 @@ public class PopupManager : MonoBehaviour
         {
             errorOkButton.onClick.AddListener(OnErrorOkClicked);
         }
+
+        if (exitGameYesButton != null)
+        {
+            exitGameYesButton.onClick.AddListener(OnExitGameYesClicked);
+        }
+
+        if (exitGameNoButton != null)
+        {
+            exitGameNoButton.onClick.AddListener(OnExitGameNoClicked);
+        }
     }
 
     private void HideAllPopups()
@@ -90,6 +106,7 @@ public class PopupManager : MonoBehaviour
         if (errorPopup != null) errorPopup.SetActive(false);
         if (reconnectionPopup != null) reconnectionPopup.SetActive(false);
         if (loadingPopup != null) loadingPopup.SetActive(false);
+        if (exitGamePopup != null) exitGamePopup.SetActive(false);
     }
 
     #endregion
@@ -427,6 +444,48 @@ public class PopupManager : MonoBehaviour
 
     #endregion
 
+    #region 5. Exit Game Popup
+
+    /// <summary>
+    /// Show game exit confirmation popup
+    /// </summary>
+    internal void ShowExitGamePopup()
+    {
+        if (exitGamePopup == null) return;
+
+        CloseCurrentPopup();
+
+        if (popupParent != null) popupParent.SetActive(true);
+
+        currentActivePopup = exitGamePopup;
+        exitGamePopup.SetActive(true);
+
+        AnimatePopupOpen(exitGamePopupRect);
+    }
+
+    private void OnExitGameYesClicked()
+    {
+        AnimatePopupClose(exitGamePopupRect, () =>
+        {
+            exitGamePopup.SetActive(false);
+            if (currentActivePopup == exitGamePopup) currentActivePopup = null;
+            UpdatePopupParentState();
+            ExitGame();
+        });
+    }
+
+    private void OnExitGameNoClicked()
+    {
+        AnimatePopupClose(exitGamePopupRect, () =>
+        {
+            exitGamePopup.SetActive(false);
+            if (currentActivePopup == exitGamePopup) currentActivePopup = null;
+            UpdatePopupParentState();
+        });
+    }
+
+    #endregion
+
     #region Animation Helpers
 
     /// <summary>
@@ -554,7 +613,8 @@ public class PopupManager : MonoBehaviour
             bool anyActive = (disconnectionPopup != null && disconnectionPopup.activeSelf) ||
                              (errorPopup != null && errorPopup.activeSelf) ||
                              (reconnectionPopup != null && reconnectionPopup.activeSelf) ||
-                             (loadingPopup != null && loadingPopup.activeSelf);
+                             (loadingPopup != null && loadingPopup.activeSelf) ||
+                             (exitGamePopup != null && exitGamePopup.activeSelf);
 
             popupParent.SetActive(anyActive);
         }
@@ -650,6 +710,7 @@ public class PopupManager : MonoBehaviour
         if (errorPopupRect != null) DOTween.Kill(errorPopupRect);
         if (reconnectionPopupRect != null) DOTween.Kill(reconnectionPopupRect);
         if (loadingPopupRect != null) DOTween.Kill(loadingPopupRect);
+        if (exitGamePopupRect != null) DOTween.Kill(exitGamePopupRect);
     }
 
     #endregion

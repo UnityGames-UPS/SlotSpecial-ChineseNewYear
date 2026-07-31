@@ -8072,6 +8072,7 @@ GameObject:
   - component: {fileID: 429142135}
   - component: {fileID: 429142137}
   - component: {fileID: 429142136}
+  - component: {fileID: 429142138}
   m_Layer: 5
   m_Name: SettingPanel
   m_TagString: Untagged
@@ -8138,6 +8139,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 429142134}
   m_CullTransparentMesh: 1
+--- !u!114 &429142138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 429142134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 429142136}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &430452062
 GameObject:
   m_ObjectHideFlags: 0
@@ -17732,11 +17777,13 @@ MonoBehaviour:
   settingsPanelRect: {fileID: 910395996}
   settingsOpenButton: {fileID: 642649741}
   settingsCloseButton: {fileID: 900673715}
+  settingsBgCloseButton: {fileID: 429142138}
   gameQuitButton: {fileID: 1095992429}
   settingsPanelPortrait: {fileID: 1109363044}
   settingsPanelRectPortrait: {fileID: 1281428937}
   settingsOpenButtonPortrait: {fileID: 754528592}
   settingsCloseButtonPortrait: {fileID: 399166446}
+  settingsBgCloseButtonPortrait: {fileID: 1109363048}
   gameQuitButtonPortrait: {fileID: 1145704117}
   normalSpeedButton: {fileID: 250853871}
   turboSpeedButton: {fileID: 380623040}
@@ -20984,6 +21031,7 @@ GameObject:
   - component: {fileID: 1109363045}
   - component: {fileID: 1109363047}
   - component: {fileID: 1109363046}
+  - component: {fileID: 1109363048}
   m_Layer: 5
   m_Name: SettingPanel (1)
   m_TagString: Untagged
@@ -21050,6 +21098,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1109363044}
   m_CullTransparentMesh: 1
+--- !u!114 &1109363048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1109363044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1109363046}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1113918385
 GameObject:
   m_ObjectHideFlags: 0
@@ -25505,6 +25597,10 @@ MonoBehaviour:
   loadingPopupRect: {fileID: 130876829}
   loadingRotatingImage: {fileID: 1331973494}
   loadingAnimatedText: {fileID: 537569219}
+  exitGamePopup: {fileID: 204977561}
+  exitGamePopupRect: {fileID: 204977562}
+  exitGameYesButton: {fileID: 1364387879}
+  exitGameNoButton: {fileID: 1148675998}
   popupScaleInDuration: 0.3
   popupScaleOutDuration: 0.2
   rotationSpeed: 360
