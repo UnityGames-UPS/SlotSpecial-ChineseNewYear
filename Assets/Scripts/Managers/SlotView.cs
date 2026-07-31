@@ -66,10 +66,6 @@ public class SlotView : MonoBehaviour
     [SerializeField] private float quickStopDuration = 0.2f;
     [SerializeField] private int minSpinCyclesBeforeStop = 3;
 
-    [Header("Scatter Anticipation Settings")]
-    [SerializeField] private int scatterSymbolId = 12;
-    [SerializeField] private float anticipationExtraSpins = 3f;
-    [SerializeField] private float anticipationSpeedMultiplier = 1.5f;
 
     [Header("Win Animation Settings")]
     [SerializeField] private float winAnimationDuration = 3.0f; // Total duration each win symbol animation plays
@@ -88,7 +84,6 @@ public class SlotView : MonoBehaviour
     [Tooltip("GameObject references for win animations. Each should have an ImageAnimation component attached.")]
     [SerializeField] private ColumnOverlays[] winAnimationColumns = new ColumnOverlays[5];
 
-    [SerializeField] private GameObject anticipationFrame;
 
     [Header("Symbol Info Card")]
     [SerializeField] private SymbolInfoCard symbolInfoCard;
@@ -107,7 +102,6 @@ public class SlotView : MonoBehaviour
     internal List<List<int>> currentDisplayMatrix;
 
     private bool isSpinning;
-    private bool scatterAnticipationActive = false;
 
     #region Initialization
 
@@ -124,7 +118,6 @@ public class SlotView : MonoBehaviour
         DisableColumns(winBoxColumns);
         DisableColumns(winAnimationColumns);
         HidePhase1TotalWinText();
-        if (anticipationFrame) anticipationFrame.SetActive(false);
         if (symbolInfoCard) symbolInfoCard.HideCard();
     }
 
@@ -360,7 +353,6 @@ public class SlotView : MonoBehaviour
         if (symbolInfoCard != null) symbolInfoCard.HideCard();
 
         isSpinning = true;
-        scatterAnticipationActive = false;
         KillAllTweens();
 
         DisableAllOverlays();
@@ -424,10 +416,6 @@ public class SlotView : MonoBehaviour
         slotTransform.localPosition = new Vector3(slotTransform.localPosition.x, middlePosition, 0);
 
         float currentSpeed = spinSpeed;
-        if (scatterAnticipationActive && columnIndex == 4)
-        {
-            currentSpeed = spinSpeed / anticipationSpeedMultiplier;
-        }
 
         float cycleDuration = symbolHeight / currentSpeed;
 
@@ -497,40 +485,12 @@ public class SlotView : MonoBehaviour
     {
         currentDisplayMatrix = resultMatrix;
 
-        int actualScatterId = gameManager.gameConfig != null ? gameManager.gameConfig.scatterSymbolId : scatterSymbolId;
-        int scatterCount = 0;
-        for (int col = 0; col < 4; col++) // Only check first 4 reels (0..3) for anticipation trigger
-        {
-            for (int row = 0; row < resultMatrix[col].Count; row++)
-            {
-                // Count ONLY the actual scatter ID, excluding wilds or any other symbols
-                if (resultMatrix[col][row] == actualScatterId)
-                {
-                    scatterCount++;
-                    break;
-                }
-            }
-        }
-
-        if (scatterCount >= 2 && !isQuickStop)
-        {
-            scatterAnticipationActive = true;
-            if (anticipationFrame) anticipationFrame.SetActive(true);
-            AudioManager.Instance?.PlayAnticipationFastSpin();
-        }
-
         while (true)
         {
             bool allReelsReady = true;
             for (int col = 0; col < 5; col++)
             {
-                int requiredCycles = minSpinCyclesBeforeStop;
-                if (scatterAnticipationActive && col == 4)
-                {
-                    requiredCycles += Mathf.RoundToInt(anticipationExtraSpins);
-                }
-
-                if (reelCycleCount[col] < requiredCycles)
+                if (reelCycleCount[col] < minSpinCyclesBeforeStop)
                 {
                     allReelsReady = false;
                     break;
@@ -562,8 +522,6 @@ public class SlotView : MonoBehaviour
         yield return new WaitForSeconds(longestStopTime);
 
         isSpinning = false;
-        scatterAnticipationActive = false;
-        if (anticipationFrame) anticipationFrame.SetActive(false);
 
         onComplete?.Invoke();
     }
@@ -598,22 +556,16 @@ public class SlotView : MonoBehaviour
         // ── Play reel-stop sound immediately when symbols lock in ──────────
         AudioManager.Instance?.PlayReelStop();
 
-        // Detect scatter / wild symbols in this column for hit sounds
+        // Detect wild symbols in this column for hit sounds
         if (currentDisplayMatrix != null && columnIndex < currentDisplayMatrix.Count)
         {
-            int actualScatterId = gameManager?.gameConfig != null
-                ? gameManager.gameConfig.scatterSymbolId
-                : scatterSymbolId;
-            bool hasScatter = false;
-            bool hasWild    = false;
+            bool hasWild = false;
             int wildId = gameManager?.gameConfig != null ? gameManager.gameConfig.wildSymbolId : 10;
             foreach (int sym in currentDisplayMatrix[columnIndex])
             {
-                if (sym == actualScatterId || sym == 12) hasScatter = true;
-                if (sym == wildId)                       hasWild    = true;
+                if (sym == wildId) hasWild = true;
             }
-            if (hasScatter) AudioManager.Instance?.PlayScatterHit();
-            else if (hasWild) AudioManager.Instance?.PlayWildHit();
+            if (hasWild) AudioManager.Instance?.PlayReelStop();
         }
         // ──────────────────────────────────────────────────────────────────
 
@@ -693,17 +645,13 @@ public class SlotView : MonoBehaviour
     {
         if (currentDisplayMatrix == null || col >= currentDisplayMatrix.Count) return;
         
-        int actualScatterId = gameManager?.gameConfig != null ? gameManager.gameConfig.scatterSymbolId : scatterSymbolId;
-        
         for (int row = 0; row < currentDisplayMatrix[col].Count; row++)
         {
             int symId = currentDisplayMatrix[col][row];
-            // Exclude USpin symbol (ID 11) from landing animation
-            bool isScatter = (symId == actualScatterId && symId != 11) || symId == 12;
             int wildId = gameManager?.gameConfig != null ? gameManager.gameConfig.wildSymbolId : 10;
             bool isWild = (symId == wildId);
             
-            if (isScatter || isWild)
+            if (isWild)
             {
                 AnimateSymbolSingleLoop(col, row, 1);
             }
@@ -717,7 +665,8 @@ public class SlotView : MonoBehaviour
         // Clear any individual hit animations before starting the collective one
         KillWinTweens();
 
-        int actualScatterId = gameManager?.gameConfig != null ? gameManager.gameConfig.scatterSymbolId : scatterSymbolId;
+        int actualScatterId = gameManager?.gameConfig != null ? gameManager.gameConfig.scatterSymbolId : -1;
+        if (actualScatterId < 0) return;
         
         for (int col = 0; col < 5; col++)
         {
@@ -740,7 +689,7 @@ public class SlotView : MonoBehaviour
         }
 
         KillWinTweens();
-        AudioManager.Instance?.PlayWinLine();
+        AudioManager.Instance?.PlayWinLinePhase1Start();
 
         List<ImageAnimation> activeUSpinAnims = new List<ImageAnimation>();
         int completedCount = 0;
@@ -826,7 +775,7 @@ public class SlotView : MonoBehaviour
         if (currentDisplayMatrix == null) return;
 
         KillWinTweens();
-        AudioManager.Instance?.PlayWinLine();
+        AudioManager.Instance?.PlayWinLinePhase1Start();
 
         for (int col = 0; col < 5; col++)
         {
@@ -963,7 +912,7 @@ public class SlotView : MonoBehaviour
         // Show Phase 1 Total Win Text with final win value
         ShowPhase1TotalWin(totalWinAmount);
 
-        AudioManager.Instance?.PlayWinLine();
+        AudioManager.Instance?.PlayWinLinePhase1Start();
 
         foreach (int flatIndex in allWinPositions)
         {
@@ -982,7 +931,6 @@ public class SlotView : MonoBehaviour
 
         yield return new WaitForSeconds(winSymbolLoopDuration);
 
-        AudioManager.Instance?.StopWinLine();
         KillWinTweens(false);
         HideAllWinLineTexts();
         HidePhase1TotalWinText();
@@ -1015,7 +963,7 @@ public class SlotView : MonoBehaviour
                 KillWinTweens(false);
                 HideAllWinLineTexts();
 
-                AudioManager.Instance?.PlayWinLine();
+                AudioManager.Instance?.PlayWinLinePhase1Start();
 
                 foreach (int flatIndex in winLine.positions)
                 {
@@ -1310,7 +1258,6 @@ public class SlotView : MonoBehaviour
             StopCoroutine(winAnimationCoroutine);
             winAnimationCoroutine = null;
         }
-        AudioManager.Instance?.StopWinLine();
 
         // Stop all win animations and disable animation GameObjects
         if (winAnimationColumns != null)

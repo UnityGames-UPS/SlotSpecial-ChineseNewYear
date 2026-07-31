@@ -211,7 +211,7 @@ public class UIManager : MonoBehaviour
     private System.Action universalWinPopupCallback;
     private Coroutine uwpAutoCloseCoroutine;
     private Tween uwpWinTween;
-    [SerializeField] private float uwpAutoCloseDelay = 3f;
+    [SerializeField] private float uwpAutoCloseDelay = 5f;
 
     private void Awake()
     {
@@ -431,7 +431,7 @@ public class UIManager : MonoBehaviour
         {
             autoSpinStopButton.onClick.AddListener(() =>
             {
-                AudioManager.Instance?.PlayButton();
+                AudioManager.Instance?.PlayPrimaryActionButton();
                 gameManager.StopAutoPlay();
             });
         }
@@ -439,7 +439,7 @@ public class UIManager : MonoBehaviour
         {
             autoSpinStopButtonPortrait.onClick.AddListener(() =>
             {
-                AudioManager.Instance?.PlayButton();
+                AudioManager.Instance?.PlayPrimaryActionButton();
                 gameManager.StopAutoPlay();
             });
         }
@@ -455,12 +455,12 @@ public class UIManager : MonoBehaviour
         if (expandButtonPortrait) expandButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExpand(); });
         if (shrinkButtonPortrait) shrinkButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
 
-        if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
-        if (wheelSpinButtonPortrait) wheelSpinButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnWheelSpinClicked(); });
+        if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); OnWheelSpinClicked(); });
+        if (wheelSpinButtonPortrait) wheelSpinButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); OnWheelSpinClicked(); });
 
         // Take button for universal win popup
-        if (uwpTakeButton) uwpTakeButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); CloseUniversalWinPopup(); });
-        if (uwpTakeButtonPortrait) uwpTakeButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); CloseUniversalWinPopup(); });
+        if (uwpTakeButton) uwpTakeButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); CloseUniversalWinPopup(); });
+        if (uwpTakeButtonPortrait) uwpTakeButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); CloseUniversalWinPopup(); });
 
         // Speed buttons setup (Three-layer Toggle)
         if (normalSpeedButton) normalSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
@@ -800,6 +800,7 @@ public class UIManager : MonoBehaviour
 
     private void OpenAutoPlayPanel()
     {
+        AudioManager.Instance?.PlayAutoplayPanelOpen();
         if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
             CloseSettingsPanelImmediate();
 
@@ -1643,6 +1644,7 @@ public class UIManager : MonoBehaviour
     {
         if (universalWinPopup == null) return;
 
+        AudioManager.Instance?.PlayWinObjectBg();
         isSpecialWinActive = true;
         universalWinPopupCallback = onTakePressed;
 
@@ -1743,8 +1745,8 @@ public class UIManager : MonoBehaviour
         {
             universalWinPopupRect.localScale = Vector3.zero;
             Sequence openSeq = DOTween.Sequence();
-            openSeq.Append(universalWinPopupRect.DOScale(1.2f, 0.25f).SetEase(Ease.OutCubic));
-            openSeq.Append(universalWinPopupRect.DOScale(1f, 0.15f).SetEase(Ease.InOutSine));
+            openSeq.Append(universalWinPopupRect.DOScale(1.2f, 0.5f).SetEase(Ease.OutCubic));
+            openSeq.Append(universalWinPopupRect.DOScale(1f, 0.3f).SetEase(Ease.InOutSine));
         }
 
         if (starFountain != null) starFountain.PlayStarBurst();
@@ -1797,6 +1799,8 @@ public class UIManager : MonoBehaviour
     private void CloseUniversalWinPopup()
     {
         if (universalWinPopup == null || !universalWinPopup.activeSelf) return;
+
+        AudioManager.Instance?.StopWinObjectBg();
 
         if (uwpWinTween != null)
         {

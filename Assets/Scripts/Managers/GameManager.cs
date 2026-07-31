@@ -87,13 +87,29 @@ public class GameManager : MonoBehaviour
     internal void IncreaseBet()
     {
         if (currentState != GameState.Idle || isAutoPlaying) return;
-        SetBetIndex((currentBetIndex + 1) % gameConfig.availableBets.Count);
+        if (gameConfig == null || gameConfig.availableBets == null || gameConfig.availableBets.Count == 0) return;
+        int nextIndex = currentBetIndex + 1;
+        if (nextIndex >= gameConfig.availableBets.Count)
+        {
+            AudioManager.Instance?.PlayMaxBetReached();
+        }
+        else
+        {
+            AudioManager.Instance?.PlayBetPlusMinus();
+            SetBetIndex(nextIndex);
+        }
     }
 
     internal void DecreaseBet()
     {
         if (currentState != GameState.Idle || isAutoPlaying) return;
-        SetBetIndex((currentBetIndex - 1 + gameConfig.availableBets.Count) % gameConfig.availableBets.Count);
+        if (gameConfig == null || gameConfig.availableBets == null || gameConfig.availableBets.Count == 0) return;
+        int nextIndex = currentBetIndex - 1;
+        if (nextIndex >= 0)
+        {
+            AudioManager.Instance?.PlayBetPlusMinus();
+            SetBetIndex(nextIndex);
+        }
     }
 
     internal void SetBetIndex(int index)
@@ -353,8 +369,8 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator DelayScatterTriggerResult()
     {
-        // Play special 3-scatter trigger sound AFTER all reels have stopped
-        AudioManager.Instance?.Play3ScatterHit();
+        // Play special feature trigger sound AFTER all reels have stopped
+        AudioManager.Instance?.Play3UspinWinLineLoop();
 
         // Start scatter animations together AFTER all reels have stopped
         // Using 4 loops to match the 6-second delay (4 * 1.5s = 6s)
@@ -367,7 +383,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator DelayUSpinTriggerResult()
     {
-        AudioManager.Instance?.Play3ScatterHit();
+        AudioManager.Instance?.Play3UspinWinLineLoop();
 
         bool animFinished = false;
         if (slotView != null)
@@ -386,6 +402,7 @@ public class GameManager : MonoBehaviour
 
         uiManager.TriggerUSpinBonus(lastResult.uSpinData, () =>
         {
+            AudioManager.Instance?.Stop3UspinWinLineLoop();
             lastResult.uSpinData.triggered = false;
             ResumeAfterSpecialFeature();
         });
@@ -393,7 +410,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator DelayMoneyBagTriggerResult()
     {
-        AudioManager.Instance?.Play3ScatterHit(); // Using scatter hit as generic trigger sound for now
+        AudioManager.Instance?.Play3UspinWinLineLoop();
 
         if (slotView != null)
         {
@@ -603,6 +620,7 @@ public class GameManager : MonoBehaviour
         freeSpinsRemaining = spins;
         freeSpinsUsed = 0;
         waitingForFreeSpinStart = true;
+        AudioManager.Instance?.PlayFreeSpinBg();
 
         if (isAutoPlaying)
         {
@@ -645,6 +663,7 @@ public class GameManager : MonoBehaviour
     {
         isInFreeSpins = false;
         freeSpinsRemaining = 0;
+        AudioManager.Instance?.PlayMainBg();
 
         uiManager.OnFreeSpinsEnded(totalRoundWin, totalSpinsUsed);
 

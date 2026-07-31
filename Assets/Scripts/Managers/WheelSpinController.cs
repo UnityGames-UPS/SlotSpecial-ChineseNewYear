@@ -181,11 +181,26 @@ public class WheelSpinController : MonoBehaviour
 
         Debug.Log($"[WheelSpin] Target Index: {targetIndex}, Arrow Angle: {arrowAngle:F1}, Target Local Z: {finalTargetLocalRotation:F1}, Total Rotation: {totalRotation:F1}");
 
+        float lastAngle = wheelRect.localEulerAngles.z;
+        float accumulatedAngleChange = 0f;
+        float anglePerSegment = (segments != null && segments.Count > 0) ? (360f / segments.Count) : 20f;
+
         wheelRect.DORotate(
             new Vector3(0, 0, totalRotation),
             spinDuration,
             RotateMode.FastBeyond360
-        ).SetEase(spinEase);
+        ).SetEase(spinEase).OnUpdate(() =>
+        {
+            float currentAngle = wheelRect.localEulerAngles.z;
+            float delta = Mathf.DeltaAngle(lastAngle, currentAngle);
+            accumulatedAngleChange += Mathf.Abs(delta);
+            if (accumulatedAngleChange >= anglePerSegment)
+            {
+                accumulatedAngleChange %= anglePerSegment;
+                AudioManager.Instance?.PlayWheelSegmentTick();
+            }
+            lastAngle = currentAngle;
+        });
 
         yield return new WaitForSeconds(spinDuration);
 

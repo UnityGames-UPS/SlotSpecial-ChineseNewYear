@@ -493,6 +493,7 @@ public class PopupManager : MonoBehaviour
     /// </summary>
     private void AnimatePopupOpen(RectTransform popupRect)
     {
+        AudioManager.Instance?.PlayPopupOpenClose();
         if (popupRect == null) return;
 
         popupRect.localScale = Vector3.zero;
@@ -504,6 +505,7 @@ public class PopupManager : MonoBehaviour
     /// </summary>
     private void AnimatePopupClose(RectTransform popupRect, System.Action onComplete)
     {
+        AudioManager.Instance?.PlayPopupOpenClose();
         if (popupRect == null)
         {
             onComplete?.Invoke();

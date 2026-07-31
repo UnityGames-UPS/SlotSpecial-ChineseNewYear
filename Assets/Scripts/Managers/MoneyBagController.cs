@@ -116,6 +116,7 @@ public class MoneyBagController : MonoBehaviour
         }
         
         gameObject.SetActive(true);
+        AudioManager.Instance?.PlayFeatureOpenLoop();
     }
 
     private void OnMoneyBagClicked(int index)
@@ -181,6 +182,7 @@ public class MoneyBagController : MonoBehaviour
         yield return new WaitForSeconds(popDuration + 1.5f);
 
         // Notify bonus pick sequence complete (UIManager will disable panel during black film transition)
+        AudioManager.Instance?.StopFeatureOpenLoop();
         onCompleteCallback?.Invoke();
     }
 
