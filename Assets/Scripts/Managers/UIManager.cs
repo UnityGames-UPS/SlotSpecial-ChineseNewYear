@@ -42,8 +42,6 @@ public class UIManager : MonoBehaviour
     [Header("Bonus Wheel")]
     [SerializeField] private WheelSpinController mainWheel;
     [SerializeField] private GameObject wheelScreen;
-    [SerializeField] private GameObject wheelLandscapeBackground;
-    [SerializeField] private GameObject wheelPortraitBackground;
     [SerializeField] private Button wheelSpinButton;
     [SerializeField] private CanvasGroup transitionBackFilm;
     [SerializeField] private StarFountain wheelCoinFountain;
@@ -221,28 +219,7 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        // Test shortcut 1: Press 1 to trigger Big Win scenario with win amount 6
-        if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1))
-        {
-            ShowUniversalWinPopup(WinPopupType.BigWin, 6);
-        }
 
-        // Test shortcut 2: Press 2 to enable Wheel Bonus screen + coin fountain + anticlockwise rotating object
-        if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2))
-        {
-            if (wheelScreen != null) wheelScreen.SetActive(true);
-            StartWheelBonusEffects();
-        }
-
-        // Test shortcut 3: Press 3 to close Wheel Bonus screen + stop coin fountain & rotating object
-        if (Input.GetKeyDown(KeyCode.Alpha3) || Input.GetKeyDown(KeyCode.Keypad3))
-        {
-            StopWheelBonusEffects();
-            if (wheelScreen != null) wheelScreen.SetActive(false);
-        }
-    }
 
     public void OnFocusChanged(string value)
     {
@@ -252,34 +229,6 @@ public class UIManager : MonoBehaviour
         if (gameManager != null && gameManager.socketManager != null)
         {
             gameManager.socketManager.HandleFocusChange(focused);
-        }
-    }
-
-    private void OnEnable()
-    {
-        OrientationChange.OnOrientationChanged += HandleOrientationChange;
-    }
-
-    private void OnDisable()
-    {
-        OrientationChange.OnOrientationChanged -= HandleOrientationChange;
-    }
-
-    private void HandleOrientationChange(OrientationChange.OrientationMode mode, int width, int height)
-    {
-        UpdateWheelBackgrounds(mode);
-    }
-
-    internal void UpdateWheelBackgrounds(OrientationChange.OrientationMode mode)
-    {
-        bool isMobilePortrait = (mode == OrientationChange.OrientationMode.MobilePortrait);
-        if (wheelLandscapeBackground != null)
-        {
-            wheelLandscapeBackground.SetActive(!isMobilePortrait);
-        }
-        if (wheelPortraitBackground != null)
-        {
-            wheelPortraitBackground.SetActive(isMobilePortrait);
         }
     }
 
@@ -1856,11 +1805,7 @@ public class UIManager : MonoBehaviour
     internal void StartWheelBonusEffects()
     {
         var oc = Object.FindFirstObjectByType<OrientationChange>();
-        if (oc != null)
-        {
-            UpdateWheelBackgrounds(oc.CurrentMode);
-        }
-
+        
         if (wheelCoinFountain != null)
         {
             wheelCoinFountain.PlayStarBurst();

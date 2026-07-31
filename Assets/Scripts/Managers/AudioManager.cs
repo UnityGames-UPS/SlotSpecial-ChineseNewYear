@@ -28,56 +28,26 @@ public class AudioManager : MonoBehaviour
     private const string PrefKeyMusicVol = "audio_music_volume";
     private const string PrefKeySfxVol   = "audio_sfx_volume";
 
-    [Header("Audio Sources (4 Designated Sources)")]
-    [Tooltip("Source 1: Main BG / Free Spin BG / Feature Open Loops (played in loop)")]
+    [Header("Audio Sources")]
     [SerializeField] private AudioSource bgMusicSource;
-    [Tooltip("Source 2: Primary UI sound effects")]
     [SerializeField] private AudioSource uiSource;
-    [Tooltip("Source 3: Wheel Segment tick sound effects")]
     [SerializeField] private AudioSource wheelSegmentSource;
-    [Tooltip("Source 4: Reserve UI source used when Source 2 is busy")]
     [SerializeField] private AudioSource reserveSource;
 
-    [Header("1. Main BG Sounds")]
+    [Header("Audio Clips")]
     [SerializeField] private AudioClip clipGameMainBg;
-
-    [Header("2. Bet Sounds (Plus & Minus)")]
     [SerializeField] private AudioClip clipBetPlusMinus;
-
-    [Header("3. Max Bet Reached Sound")]
     [SerializeField] private AudioClip clipMaxBetReached;
-
-    [Header("4. 3 USpin Win Line Loop")]
     [SerializeField] private AudioClip clip3UspinWinLineLoop;
-
-    [Header("5. Win Object BG (Play at Open)")]
     [SerializeField] private AudioClip clipWinObjectBg;
-
-    [Header("6. Primary Action Buttons (Spin/Stop/Take/AutoplayStop/WheelStart)")]
     [SerializeField] private AudioClip clipPrimaryActionButton;
-
-    [Header("7. General Button Click")]
     [SerializeField] private AudioClip clipGeneralButtonClick;
-
-    [Header("8. Popup Open / Close Sound")]
     [SerializeField] private AudioClip clipPopupOpenClose;
-
-    [Header("9. Autoplay Panel Open Sound")]
     [SerializeField] private AudioClip clipAutoplayPanelOpen;
-
-    [Header("10. Feature Open Loop (Bonus Wheel & MoneyBag - Loop until feature enables)")]
     [SerializeField] private AudioClip clipFeatureOpenLoop;
-
-    [Header("11. Free Spin BG (Loop while Free Spin)")]
     [SerializeField] private AudioClip clipFreeSpinBg;
-
-    [Header("12. Bonus Wheel Spin Segment Tick")]
     [SerializeField] private AudioClip clipWheelSegmentTick;
-
-    [Header("13. Win Line Phase 1 Start")]
     [SerializeField] private AudioClip clipWinLinePhase1Start;
-
-    [Header("14. Slot Reel Column Stop")]
     [SerializeField] private AudioClip clipReelStop;
 
     private bool _musicEnabled = true;

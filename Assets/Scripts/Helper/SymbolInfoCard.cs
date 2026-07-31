@@ -196,7 +196,7 @@ public class SymbolInfoCard : MonoBehaviour
                 for (int m = 0; m < symbolInfo.multipliers.Count; m++)
                 {
                     double payout = symbolInfo.multipliers[m] * betFactor;
-                    lines.Add($"{currentMatch}x   {payout.ToString("0.###")}");
+                    lines.Add($"<color=#FFC700>X{currentMatch}</color>   {payout.ToString("0.###")}");
                     currentMatch--;
                 }
 
