@@ -101,6 +101,7 @@ public class GameManager : MonoBehaviour
         currentBetIndex = index;
         UpdateBetAmount();
         uiManager.UpdateBetDisplay();
+        if (slotView != null) slotView.OnBetChanged();
     }
 
     private void UpdateBetAmount()

@@ -90,6 +90,9 @@ public class SlotView : MonoBehaviour
 
     [SerializeField] private GameObject anticipationFrame;
 
+    [Header("Symbol Info Card")]
+    [SerializeField] private SymbolInfoCard symbolInfoCard;
+
 
     private float middlePosition = 0f;
     private float cycleDistance;
@@ -113,6 +116,7 @@ public class SlotView : MonoBehaviour
         BuildSymbolSpriteArray();
         InitializeReels();
         DisableAllOverlays();
+        SetupSymbolButtons();
     }
 
     private void DisableAllOverlays()
@@ -121,6 +125,66 @@ public class SlotView : MonoBehaviour
         DisableColumns(winAnimationColumns);
         HidePhase1TotalWinText();
         if (anticipationFrame) anticipationFrame.SetActive(false);
+        if (symbolInfoCard) symbolInfoCard.HideCard();
+    }
+
+    private void SetupSymbolButtons()
+    {
+        if (reelImagesList == null) return;
+        for (int col = 0; col < reelImagesList.Count; col++)
+        {
+            var reel = reelImagesList[col];
+            if (reel == null || reel.images == null) continue;
+            int visibleStartIndex = 2;
+            int rowCount = 3;
+            for (int row = 0; row < rowCount; row++)
+            {
+                int imageIndex = visibleStartIndex + row;
+                if (imageIndex < reel.images.Count && reel.images[imageIndex] != null)
+                {
+                    Image img = reel.images[imageIndex];
+                    SymbolButtonHandler btnHandler = img.GetComponent<SymbolButtonHandler>();
+                    if (btnHandler == null)
+                    {
+                        btnHandler = img.gameObject.AddComponent<SymbolButtonHandler>();
+                    }
+                    btnHandler.Init(col, row, this);
+                }
+            }
+        }
+    }
+
+    internal void HideSymbolInfoCard()
+    {
+        if (symbolInfoCard != null) symbolInfoCard.HideCard();
+    }
+
+    internal void OnBetChanged()
+    {
+        if (symbolInfoCard != null && symbolInfoCard.gameObject.activeSelf)
+        {
+            symbolInfoCard.RefreshCard(gameManager);
+        }
+    }
+
+    internal void OnSymbolClicked(int col, int row, RectTransform symbolRect)
+    {
+        if (isSpinning)
+        {
+            if (symbolInfoCard != null) symbolInfoCard.HideCard();
+            return;
+        }
+
+        if (currentDisplayMatrix == null || col >= currentDisplayMatrix.Count || row >= currentDisplayMatrix[col].Count)
+        {
+            return;
+        }
+
+        int symbolId = currentDisplayMatrix[col][row];
+        if (symbolInfoCard != null)
+        {
+            symbolInfoCard.ShowCard(symbolId, col, row, symbolRect, gameManager);
+        }
     }
 
     private static void DisableColumns(ColumnOverlays[] cols)
@@ -292,6 +356,8 @@ public class SlotView : MonoBehaviour
     internal void StartSpin()
     {
         if (isSpinning) return;
+
+        if (symbolInfoCard != null) symbolInfoCard.HideCard();
 
         isSpinning = true;
         scatterAnticipationActive = false;
