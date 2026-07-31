@@ -32,6 +32,11 @@ public class SocketIOManager : MonoBehaviour
     internal bool isExiting;   // True when CloseSocket is called intentionally (exit button)
     private bool isDestroyed;  // True when scene is unloading or application is quitting
 
+    private bool hasFocus = true;
+    private float focusLostTime = 0f;
+    private Coroutine focusCheckRoutine;
+    private float maxBackgroundTime = 60f;
+
     private Coroutine pingCoroutine;
     private float lastPongTime;
     private bool waitingForPong;
@@ -332,6 +337,59 @@ public class SocketIOManager : MonoBehaviour
     {
         if (RaycastBlocker != null) RaycastBlocker.SetActive(active);
     }
+
+    #region Focus / Background Timeout
+    internal void HandleFocusChange(bool focus)
+    {
+        hasFocus = focus;
+
+        if (!focus)
+        {
+            focusLostTime = Time.time;
+            if (focusCheckRoutine == null && !isExiting && !isDestroyed)
+                focusCheckRoutine = StartCoroutine(FocusTimeoutCheck());
+        }
+        else
+        {
+            if (focusCheckRoutine != null)
+            {
+                StopCoroutine(focusCheckRoutine);
+                focusCheckRoutine = null;
+            }
+        }
+    }
+
+    private IEnumerator FocusTimeoutCheck()
+    {
+        while (!hasFocus && !isExiting && !isDestroyed)
+        {
+            if (Time.time - focusLostTime >= maxBackgroundTime)
+            {
+                Debug.LogWarning("[SOCKET] Background timeout — closing connection");
+                isConnected = false;
+                StopPingRoutine();
+
+                if (socketManager != null)
+                {
+                    try { socketManager.Close(); }
+                    catch (Exception e) { Debug.LogWarning($"[SOCKET] Focus close error: {e.Message}"); }
+                }
+
+                if (popupManager != null)
+                {
+                    popupManager.ShowDisconnectionPopup();
+                }
+
+                focusCheckRoutine = null;
+                yield break;
+            }
+
+            yield return new WaitForSecondsRealtime(1f);
+        }
+
+        focusCheckRoutine = null;
+    }
+    #endregion
 
     #region Ping/Pong Health Check
 

@@ -204,6 +204,25 @@ public class UIManager : MonoBehaviour
     private Coroutine uwpAutoCloseCoroutine;
     [SerializeField] private float uwpAutoCloseDelay = 3f;
 
+    private void Awake()
+    {
+        if (jsFunctCalls != null)
+        {
+            jsFunctCalls.RegisterVisibilityListener(gameObject.name);
+        }
+    }
+
+    public void OnFocusChanged(string value)
+    {
+        bool focused = value == "1";
+        Debug.Log("UNITY FOCUS CHANGED: " + value + " (focused: " + focused + ")");
+        AudioManager.Instance?.SetMuteAll(!focused);
+        if (gameManager != null && gameManager.socketManager != null)
+        {
+            gameManager.socketManager.HandleFocusChange(focused);
+        }
+    }
+
     private void Start()
     {
         SetupButtons();
