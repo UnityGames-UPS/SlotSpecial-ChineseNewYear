@@ -914,22 +914,8 @@ public class SlotView : MonoBehaviour
 
         AudioManager.Instance?.PlayWinLinePhase1Start();
 
-        foreach (int flatIndex in allWinPositions)
-        {
-            int row = flatIndex / 5;
-            int col = flatIndex % 5;
-
-            if (col < 0 || col >= 5 || row < 0 || row >= rowLimit)
-            {
-                Debug.LogWarning($"[PlayTwoPhaseWinLines] Invalid position! col: {col}, row: {row}");
-                continue;
-            }
-
-            EnableWinBox(col, row);
-            AnimateWinSymbol(col, row);
-        }
-
-        yield return new WaitForSeconds(winSymbolLoopDuration);
+        // Animate all winning symbols and wait for their ImageAnimation loops to complete
+        yield return StartCoroutine(AnimateWinPositions(allWinPositions));
 
         KillWinTweens(false);
         HideAllWinLineTexts();
@@ -963,17 +949,6 @@ public class SlotView : MonoBehaviour
                 KillWinTweens(false);
                 HideAllWinLineTexts();
 
-                foreach (int flatIndex in winLine.positions)
-                {
-                    int row = flatIndex / 5;
-                    int col = flatIndex % 5;
-
-                    if (col < 0 || col >= 5 || row < 0 || row >= rowLimit) continue;
-
-                    EnableWinBox(col, row);
-                    AnimateWinSymbol(col, row);
-                }
-
                 // Show WinLineText on 1st icon of the active win line only if there are multiple win lines
                 if (winLines.Count > 1)
                 {
@@ -983,8 +958,112 @@ public class SlotView : MonoBehaviour
                     ShowWinLineTextOnIcon(firstCol, firstRow, winLine.winAmount);
                 }
 
-                yield return new WaitForSeconds(winSymbolLoopDuration);
+                // Animate win line symbols and wait for their ImageAnimation loops to complete
+                yield return StartCoroutine(AnimateWinPositions(winLine.positions));
             }
+        }
+    }
+
+    private IEnumerator AnimateWinPositions(IEnumerable<int> flatPositions)
+    {
+        if (flatPositions == null) yield break;
+
+        int rowLimit = (gameManager != null && gameManager.gameConfig != null) ? gameManager.gameConfig.rowCount : 3;
+        int loopCountTarget = (gameManager != null && (gameManager.isInFreeSpins || gameManager.isAutoPlaying)) ? 1 : winSymbolLoopCount;
+
+        List<ImageAnimation> activeAnims = new List<ImageAnimation>();
+        int completedCount = 0;
+        bool isCompleted = false;
+
+        foreach (int flatIndex in flatPositions)
+        {
+            int row = flatIndex / 5;
+            int col = flatIndex % 5;
+
+            if (col < 0 || col >= 5 || row < 0 || row >= rowLimit) continue;
+
+            EnableWinBox(col, row);
+
+            if (col >= reelImagesList.Count) continue;
+            var reel = reelImagesList[col];
+            if (reel.images == null || reel.images.Count != 7) continue;
+
+            int imageIndex = 2 + row;
+            if (imageIndex >= reel.images.Count) continue;
+
+            Image symbolImage = reel.images[imageIndex];
+            if (symbolImage == null) continue;
+
+            var animGO = WinBox(winAnimationColumns, col, row);
+            if (animGO == null) continue;
+
+            ImageAnimation imageAnim = animGO.GetComponent<ImageAnimation>();
+            if (imageAnim == null) continue;
+
+            if (col >= currentDisplayMatrix.Count || row >= currentDisplayMatrix[col].Count) continue;
+            int symbolId = currentDisplayMatrix[col][row];
+            if (symbolId < 0 || symbolId >= animationSpriteArrays.Length) continue;
+
+            List<Sprite> animSprites = animationSpriteArrays[symbolId];
+            if (animSprites == null || animSprites.Count == 0) continue;
+
+            imageAnim.textureArray = animSprites;
+            imageAnim.doLoopAnimation = true;
+
+            animGO.SetActive(true);
+            Image animRenderer = imageAnim.rendererDelegate != null ? imageAnim.rendererDelegate : animGO.GetComponent<Image>();
+            if (animRenderer != null)
+            {
+                animRenderer.DOKill();
+                Color c = animRenderer.color;
+                animRenderer.color = new Color(c.r, c.g, c.b, 1f);
+            }
+
+            symbolImage.DOKill();
+            symbolImage.DOFade(0f, 0.2f);
+
+            activeAnims.Add(imageAnim);
+
+            imageAnim.onLoopComplete = (currentLoop) =>
+            {
+                if (currentLoop >= loopCountTarget)
+                {
+                    imageAnim.onLoopComplete = null;
+                    imageAnim.StopAnimation();
+                    if (animGO != null) animGO.SetActive(false);
+
+                    if (symbolImage != null)
+                    {
+                        symbolImage.DOKill();
+                        symbolImage.DOFade(1f, 0.2f);
+                    }
+
+                    completedCount++;
+                    if (completedCount >= activeAnims.Count)
+                    {
+                        isCompleted = true;
+                    }
+                }
+            };
+        }
+
+        if (winLineBoxToAnimationDelay > 0)
+        {
+            yield return new WaitForSeconds(winLineBoxToAnimationDelay);
+        }
+
+        foreach (var imageAnim in activeAnims)
+        {
+            imageAnim.StartAnimation();
+        }
+
+        if (activeAnims.Count > 0)
+        {
+            yield return new WaitUntil(() => isCompleted);
+        }
+        else
+        {
+            yield return new WaitForSeconds(winSymbolLoopDuration);
         }
     }
 
@@ -1266,11 +1345,12 @@ public class SlotView : MonoBehaviour
                 {
                     foreach (var animGO in col.rows)
                     {
-                        if (animGO != null && animGO.activeSelf)
+                        if (animGO != null)
                         {
                             ImageAnimation imageAnim = animGO.GetComponent<ImageAnimation>();
                             if (imageAnim != null)
                             {
+                                imageAnim.onLoopComplete = null;
                                 if (imageAnim.rendererDelegate != null)
                                 {
                                     imageAnim.rendererDelegate.DOKill();
@@ -1279,7 +1359,10 @@ public class SlotView : MonoBehaviour
                                 }
                                 imageAnim.StopAnimation();
                             }
-                            animGO.SetActive(false);
+                            if (animGO.activeSelf)
+                            {
+                                animGO.SetActive(false);
+                            }
                         }
                     }
                 }

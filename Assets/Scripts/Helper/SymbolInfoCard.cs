@@ -149,19 +149,18 @@ public class SymbolInfoCard : MonoBehaviour
             // SPECIAL SYMBOL: Text alignment CENTER
             infoText.alignment = TextAlignmentOptions.Center;
             infoText.enableWordWrapping = true;
-
-            if (isUSpin)
-            {
-                infoText.text = "3 entry uspin will trigger wheel bonus feature";
-            }
-            else if (isMoneyBag)
-            {
-                infoText.text = "3 entry moneybag will trigger moneybag collect feature";
-            }
-            else if (isWild)
-            {
-                infoText.text = "replace any card expect u-spin and money bag in win line";
-            }
+if (isUSpin)
+{
+    infoText.text = "3 U-Spin symbols trigger the Wheel Bonus feature.";
+}
+else if (isMoneyBag)
+{
+    infoText.text = "3 Money Bag symbols trigger the Money Bag Collect feature.";
+}
+else if (isWild)
+{
+    infoText.text = "Substitutes for all symbols except U-Spin and Money Bag.";
+}
         }
         else
         {
