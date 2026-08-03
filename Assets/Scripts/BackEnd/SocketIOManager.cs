@@ -39,6 +39,7 @@ public class SocketIOManager : MonoBehaviour
 
     private Coroutine pingCoroutine;
     private float lastPongTime;
+    private float pingSendTime;
     private bool waitingForPong;
     private int missedPongs;
     private const int MAX_MISSED_PONGS = 5;
@@ -153,6 +154,7 @@ public class SocketIOManager : MonoBehaviour
         }
 
         StartPingRoutine();
+        SendPing();
     }
 
     private void OnSocketDisconnected()
@@ -161,6 +163,11 @@ public class SocketIOManager : MonoBehaviour
 
         isConnected = false;
         StopPingRoutine();
+
+        if (uiManager != null)
+        {
+            uiManager.UpdatePingDisplay("-- ms");
+        }
 
         if (isDestroyed)
         {
@@ -447,6 +454,7 @@ public class SocketIOManager : MonoBehaviour
     {
         if (gameSocket != null && isConnected)
         {
+            pingSendTime = Time.realtimeSinceStartup;
             gameSocket.Emit("ping");
         }
     }
@@ -456,6 +464,13 @@ public class SocketIOManager : MonoBehaviour
     {
         waitingForPong = false;
         lastPongTime = Time.time;
+
+        float rtt = Time.realtimeSinceStartup - pingSendTime;
+        int pingMs = Mathf.Max(1, Mathf.RoundToInt(rtt * 1000f));
+        if (uiManager != null)
+        {
+            uiManager.UpdatePingDisplay(pingMs);
+        }
 
         if (missedPongs > 0)
         {

@@ -172,6 +172,10 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject freeSpinCountContainer;
     [SerializeField] private TMP_Text remainingFreeSpinsText;
 
+    [Header("Ping Display")]
+    [SerializeField] private TMP_Text pingText;
+    [SerializeField] private TMP_Text pingTextPortrait;
+
     [Header("Expand-Shrink Controls")]
     [SerializeField] private Button expandButton;
     [SerializeField] private Button shrinkButton;
@@ -270,6 +274,7 @@ public class UIManager : MonoBehaviour
         StopWheelBonusEffects();
         if (wheelScreen) wheelScreen.SetActive(false);
         if (transitionBackFilm) transitionBackFilm.gameObject.SetActive(false);
+        UpdatePingDisplay("-- ms");
     }
 
     #region Loading & Intro Sequence
@@ -1208,6 +1213,16 @@ public class UIManager : MonoBehaviour
     #endregion
 
     #region Display Updates
+
+    internal void UpdatePingDisplay(int pingMs)
+    {
+        SetTMPText(pingText, pingTextPortrait, $"{pingMs} ms");
+    }
+
+    internal void UpdatePingDisplay(string content)
+    {
+        SetTMPText(pingText, pingTextPortrait, content);
+    }
 
     internal void UpdateBalanceDisplay()
     {
