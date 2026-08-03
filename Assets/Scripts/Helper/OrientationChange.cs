@@ -81,11 +81,19 @@ public class OrientationChange : MonoBehaviour
         if (!string.IsNullOrEmpty(currentDevice))
         {
             string dev = currentDevice.ToLower();
+            if (dev.Contains("desktop"))
+            {
+                return false;
+            }
             return (!string.IsNullOrEmpty(androidKeyword) && dev.Contains(androidKeyword.ToLower())) ||
                    (!string.IsNullOrEmpty(iphoneKeyword) && dev.Contains(iphoneKeyword.ToLower())) ||
                    (!string.IsNullOrEmpty(mobileKeyword) && dev.Contains(mobileKeyword.ToLower()));
         }
-        return SystemInfo.deviceType == DeviceType.Handheld;
+#if UNITY_EDITOR
+        return true;
+#else
+        return Application.isMobilePlatform || SystemInfo.deviceType == DeviceType.Handheld;
+#endif
     }
 
     public void SwitchDisplay(string dimensions)
@@ -139,42 +147,28 @@ public class OrientationChange : MonoBehaviour
         // Calculate CanvasScaler Match Width/Height
         if (CanvasScaler != null)
         {
-            Vector2 refRes = CanvasScaler.referenceResolution;
+            Vector2 refRes = (currentMode == OrientationMode.MobilePortrait) ? new Vector2(1080f, 1920f) : new Vector2(1920f, 1080f);
+            CanvasScaler.referenceResolution = refRes;
+
             float refW = refRes.x;
             float refH = refRes.y;
 
-            float widthScale = (float)width / refW;
-            float heightScale = (float)height / refH;
-
-            float targetScale;
-            if (currentMode == OrientationMode.MobilePortrait)
+            float scaleW, scaleH;
+            if (currentMode == OrientationMode.DesktopPortrait)
             {
-                float mobileWScale = (float)width / refW;
-                float mobileHScale = (float)height / refH;
-                targetScale = Mathf.Min(mobileWScale, mobileHScale);
-            }
-            else if (isLandscape)
-            {
-                targetScale = Mathf.Min(widthScale, heightScale);
-            }
-            else // DesktopPortrait
-            {
-                float portraitWidthScale = (float)height / refW;
-                float portraitHeightScale = (float)width / refH;
-                targetScale = Mathf.Min(portraitWidthScale, portraitHeightScale);
-            }
-
-            float targetMatch;
-            if (Mathf.Abs(heightScale - widthScale) < 0.0001f)
-            {
-                targetMatch = 0.5f;
+                // In DesktopPortrait, UIWrapper is rotated -90 degrees.
+                // Canvas width (1920) corresponds to screen height.
+                // Canvas height (1080) corresponds to screen width.
+                scaleW = (float)height / refW;
+                scaleH = (float)width / refH;
             }
             else
             {
-                float logRatio = Mathf.Log(heightScale / widthScale);
-                targetMatch = Mathf.Log(targetScale / widthScale) / logRatio;
-                targetMatch = Mathf.Clamp01(targetMatch);
+                scaleW = (float)width / refW;
+                scaleH = (float)height / refH;
             }
+
+            float targetMatch = (scaleW <= scaleH) ? 0f : 1f;
 
             if (matchTween != null && matchTween.IsActive()) matchTween.Kill();
             matchTween = DOTween.To(() => CanvasScaler.matchWidthOrHeight, x => CanvasScaler.matchWidthOrHeight = x, targetMatch, transitionDuration).SetEase(Ease.InOutQuad);
@@ -187,9 +181,14 @@ public class OrientationChange : MonoBehaviour
         OnOrientationChangedInstance?.Invoke(currentMode, width, height);
     }
 
-#if UNITY_EDITOR
     private void Update()
     {
+        if (Screen.width != lastWidth || Screen.height != lastHeight)
+        {
+            ApplyMatch(Screen.width, Screen.height);
+        }
+
+#if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.Space))
         {
             int w = lastHeight > 0 ? lastHeight : Screen.height;
@@ -201,6 +200,6 @@ public class OrientationChange : MonoBehaviour
             string nextDevice = IsMobileDevice() ? "desktop" : "mobile";
             DiviceCheck(nextDevice);
         }
-    }
 #endif
+    }
 }
