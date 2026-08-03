@@ -37,6 +37,9 @@ public class SocketIOManager : MonoBehaviour
     private Coroutine focusCheckRoutine;
     private float maxBackgroundTime = 60f;
 
+    [Header("Debug Settings")]
+    [SerializeField] private bool enablePingDebug = false;
+
     private Coroutine pingCoroutine;
     private float lastPongTime;
     private float pingSendTime;
@@ -453,6 +456,11 @@ public class SocketIOManager : MonoBehaviour
             pingSendTime = Time.realtimeSinceStartup;
             waitingForPong = true;
             gameSocket.Emit("ping");
+
+            if (enablePingDebug)
+            {
+                Debug.Log($"[SocketIO] Ping sent at {pingSendTime:F3}s");
+            }
         }
     }
 
@@ -473,6 +481,11 @@ public class SocketIOManager : MonoBehaviour
             if (uiManager != null)
             {
                 uiManager.UpdatePingDisplay(pingMs);
+            }
+
+            if (enablePingDebug)
+            {
+                Debug.Log($"[SocketIO] Pong received | Latency: {pingMs} ms");
             }
         }
 
