@@ -88,28 +88,48 @@ public class GameManager : MonoBehaviour
     {
         if (currentState != GameState.Idle || isAutoPlaying) return;
         if (gameConfig == null || gameConfig.availableBets == null || gameConfig.availableBets.Count == 0) return;
+
+        int maxIndex = gameConfig.availableBets.Count - 1;
         int nextIndex = currentBetIndex + 1;
-        if (nextIndex >= gameConfig.availableBets.Count)
+        if (nextIndex > maxIndex)
+        {
+            nextIndex = 0;
+        }
+
+        if (nextIndex == maxIndex)
         {
             AudioManager.Instance?.PlayMaxBetReached();
         }
         else
         {
             AudioManager.Instance?.PlayBetPlusMinus();
-            SetBetIndex(nextIndex);
         }
+
+        SetBetIndex(nextIndex);
     }
 
     internal void DecreaseBet()
     {
         if (currentState != GameState.Idle || isAutoPlaying) return;
         if (gameConfig == null || gameConfig.availableBets == null || gameConfig.availableBets.Count == 0) return;
+
+        int maxIndex = gameConfig.availableBets.Count - 1;
         int nextIndex = currentBetIndex - 1;
-        if (nextIndex >= 0)
+        if (nextIndex < 0)
+        {
+            nextIndex = maxIndex;
+        }
+
+        if (nextIndex == maxIndex)
+        {
+            AudioManager.Instance?.PlayMaxBetReached();
+        }
+        else
         {
             AudioManager.Instance?.PlayBetPlusMinus();
-            SetBetIndex(nextIndex);
         }
+
+        SetBetIndex(nextIndex);
     }
 
     internal void SetBetIndex(int index)

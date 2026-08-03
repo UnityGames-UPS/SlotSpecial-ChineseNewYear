@@ -35,6 +35,13 @@ public class OCController : MonoBehaviour
     [SerializeField] private Vector3 landscapeSlotPosition = Vector3.zero;
     [SerializeField] private Vector3 portraitSlotPosition = new Vector3(0f, -150f, 0f);
 
+    [Header("Logo Object Settings")]
+    [SerializeField] private RectTransform logoObject;
+    [SerializeField] private Vector3 landscapeLogoScale = Vector3.one;
+    [SerializeField] private Vector3 portraitLogoScale = new Vector3(1.27f, 1.27f, 1.27f);
+    [SerializeField] private Vector2 landscapeLogoPosition = new Vector2(0f, 355f);
+    [SerializeField] private Vector2 portraitLogoPosition = new Vector2(0f, 500f);
+
     [Header("Info Page & Guide Settings")]
     [SerializeField] private RectTransform infoPageScrollObject;
     [SerializeField] private RectTransform guideScrollObject;
@@ -162,7 +169,27 @@ public class OCController : MonoBehaviour
             }
         }
 
-        // 6. Update Info Page Scroll Object Height (1080 for Landscape, 1920 for Mobile Portrait)
+        // 6. Update Logo Object Scale and Position
+        if (logoObject != null)
+        {
+            Vector3 targetScale = isMobilePortrait ? portraitLogoScale : landscapeLogoScale;
+            Vector2 targetPosition = isMobilePortrait ? portraitLogoPosition : landscapeLogoPosition;
+
+            if (transitionDuration > 0)
+            {
+                Tween scaleTween = logoObject.DOScale(targetScale, transitionDuration).SetEase(Ease.OutCubic);
+                Tween posTween = logoObject.DOAnchorPos(targetPosition, transitionDuration).SetEase(Ease.OutCubic);
+                activeTweens.Add(scaleTween);
+                activeTweens.Add(posTween);
+            }
+            else
+            {
+                logoObject.localScale = targetScale;
+                logoObject.anchoredPosition = targetPosition;
+            }
+        }
+
+        // 7. Update Info Page Scroll Object Height (1080 for Landscape, 1920 for Mobile Portrait)
         if (infoPageScrollObject != null)
         {
             float targetHeight = isMobilePortrait ? 1920f : 1080f;
@@ -178,7 +205,7 @@ public class OCController : MonoBehaviour
             }
         }
 
-        // 7. Update Guide Scroll Object Height (1080 for Landscape, 1920 for Mobile Portrait)
+        // 8. Update Guide Scroll Object Height (1080 for Landscape, 1920 for Mobile Portrait)
         if (guideScrollObject != null)
         {
             float targetHeight = isMobilePortrait ? 1920f : 1080f;

@@ -338,10 +338,10 @@ public class UIManager : MonoBehaviour
     private void SetupButtons()
     {
         // Bet buttons
-        if (betPlusButton)  betPlusButton.onClick.AddListener(() => { AudioManager.Instance?.PlayBetPlus();  gameManager.IncreaseBet(); });
-        if (betMinusButton) betMinusButton.onClick.AddListener(() => { AudioManager.Instance?.PlayBetMinus(); gameManager.DecreaseBet(); });
-        if (betPlusButtonPortrait)  betPlusButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayBetPlus();  gameManager.IncreaseBet(); });
-        if (betMinusButtonPortrait) betMinusButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayBetMinus(); gameManager.DecreaseBet(); });
+        if (betPlusButton)  betPlusButton.onClick.AddListener(() => gameManager.IncreaseBet());
+        if (betMinusButton) betMinusButton.onClick.AddListener(() => gameManager.DecreaseBet());
+        if (betPlusButtonPortrait)  betPlusButtonPortrait.onClick.AddListener(() => gameManager.IncreaseBet());
+        if (betMinusButtonPortrait) betMinusButtonPortrait.onClick.AddListener(() => gameManager.DecreaseBet());
 
         // Spin button
         if (spinButton)
@@ -380,7 +380,7 @@ public class UIManager : MonoBehaviour
         {
             autoSpinStopButton.onClick.AddListener(() =>
             {
-                AudioManager.Instance?.PlayPrimaryActionButton();
+                AudioManager.Instance?.PlayAutoplayStop();
                 gameManager.StopAutoPlay();
             });
         }
@@ -388,7 +388,7 @@ public class UIManager : MonoBehaviour
         {
             autoSpinStopButtonPortrait.onClick.AddListener(() =>
             {
-                AudioManager.Instance?.PlayPrimaryActionButton();
+                AudioManager.Instance?.PlayAutoplayStop();
                 gameManager.StopAutoPlay();
             });
         }
@@ -404,12 +404,12 @@ public class UIManager : MonoBehaviour
         if (expandButtonPortrait) expandButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnExpand(); });
         if (shrinkButtonPortrait) shrinkButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); OnShrink(); });
 
-        if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); OnWheelSpinClicked(); });
-        if (wheelSpinButtonPortrait) wheelSpinButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); OnWheelSpinClicked(); });
+        if (wheelSpinButton) wheelSpinButton.onClick.AddListener(() => { AudioManager.Instance?.PlayWheelStart(); OnWheelSpinClicked(); });
+        if (wheelSpinButtonPortrait) wheelSpinButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayWheelStart(); OnWheelSpinClicked(); });
 
         // Take button for universal win popup
-        if (uwpTakeButton) uwpTakeButton.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); CloseUniversalWinPopup(); });
-        if (uwpTakeButtonPortrait) uwpTakeButtonPortrait.onClick.AddListener(() => { AudioManager.Instance?.PlayPrimaryActionButton(); CloseUniversalWinPopup(); });
+        if (uwpTakeButton) uwpTakeButton.onClick.AddListener(OnUniversalWinTakeButtonClicked);
+        if (uwpTakeButtonPortrait) uwpTakeButtonPortrait.onClick.AddListener(OnUniversalWinTakeButtonClicked);
 
         // Speed buttons setup (Three-layer Toggle)
         if (normalSpeedButton) normalSpeedButton.onClick.AddListener(() => { AudioManager.Instance?.PlayButton(); SetSpeedMode(SpinSpeed.Turbo); });
@@ -636,6 +636,7 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager.isAutoPlaying)
         {
+            AudioManager.Instance?.PlayAutoplayStop();
             gameManager.StopAutoPlay();
             return;
         }
@@ -650,6 +651,7 @@ public class UIManager : MonoBehaviour
     {
         if (gameManager.isAutoPlaying)
         {
+            AudioManager.Instance?.PlayAutoplayStop();
             gameManager.StopAutoPlay();
             return;
         }
@@ -661,6 +663,7 @@ public class UIManager : MonoBehaviour
                 return;
 
             lastRapidStopTime = Time.unscaledTime;
+            AudioManager.Instance?.PlaySpinStop();
             gameManager.RequestStop();
         }
     }
@@ -1742,6 +1745,13 @@ public class UIManager : MonoBehaviour
     {
         yield return new WaitForSeconds(uwpAutoCloseDelay);
         uwpAutoCloseCoroutine = null;
+        CloseUniversalWinPopup();
+    }
+
+    private void OnUniversalWinTakeButtonClicked()
+    {
+        AudioManager.Instance?.StopWinObjectBg();
+        AudioManager.Instance?.PlayTakeButton();
         CloseUniversalWinPopup();
     }
 

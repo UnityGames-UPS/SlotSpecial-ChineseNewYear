@@ -214,7 +214,7 @@ public class AudioManager : MonoBehaviour
     // 6. Spin / Stop / Take / AutoplayStop / WheelStart Btn Sound
     internal void PlayPrimaryActionButton()
     {
-        PlayUISound(clipPrimaryActionButton);
+        PlayUISound(clipPrimaryActionButton != null ? clipPrimaryActionButton : clipGeneralButtonClick);
     }
 
     internal void PlaySpinStart()    => PlayPrimaryActionButton();

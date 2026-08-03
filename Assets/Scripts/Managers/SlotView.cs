@@ -963,8 +963,6 @@ public class SlotView : MonoBehaviour
                 KillWinTweens(false);
                 HideAllWinLineTexts();
 
-                AudioManager.Instance?.PlayWinLinePhase1Start();
-
                 foreach (int flatIndex in winLine.positions)
                 {
                     int row = flatIndex / 5;

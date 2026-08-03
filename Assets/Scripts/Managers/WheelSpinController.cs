@@ -151,6 +151,7 @@ public class WheelSpinController : MonoBehaviour
     {
         isSpinning = true;
         currentTargetIndex = targetIndex;
+        AudioManager.Instance?.PlayWheelStart();
 
         // 1. Calculate the angle for the target segment relative to the wheel's local zero
         float targetSegmentAngle = (targetIndex * segmentAngle) + alignmentOffset;
