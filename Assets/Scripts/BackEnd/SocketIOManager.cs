@@ -129,6 +129,7 @@ public class SocketIOManager : MonoBehaviour
         gameSocket.On<string>("game:init", OnInitReceived);
         gameSocket.On<string>("result", OnResultReceived);
         gameSocket.On<string>("pong", OnPongReceived);
+        gameSocket.On("pong", OnPongReceivedNoArgs);
         gameSocket.On<string>("AnotherDevice", OnAnotherDevice);
         gameSocket.On<string>("balance:sync", OnBalanceSyncReceived);
 
@@ -147,6 +148,7 @@ public class SocketIOManager : MonoBehaviour
         waitingForPong = false;
         missedPongs = 0;
         lastPongTime = Time.time;
+        pingSendTime = Time.realtimeSinceStartup;
 
         if (popupManager != null)
         {
@@ -423,30 +425,24 @@ public class SocketIOManager : MonoBehaviour
         {
             yield return new WaitForSeconds(PING_INTERVAL);
 
-            if (waitingForPong)
+            if (waitingForPong && isInitialized)
             {
-                float timeSinceLastPong = Time.time - lastPongTime;
+                missedPongs++;
 
-                if (timeSinceLastPong > PONG_TIMEOUT)
+                if (missedPongs >= MAX_MISSED_PONGS)
                 {
-                    missedPongs++;
+                    Debug.LogWarning("[SocketIO] Max pongs missed - disconnecting");
+                    OnSocketDisconnected();
+                    yield break;
+                }
 
-                    if (missedPongs >= MAX_MISSED_PONGS)
-                    {
-                        Debug.LogWarning("[SocketIO] Max pongs missed - disconnecting");
-                        OnSocketDisconnected();
-                        yield break;
-                    }
-
-                    if (missedPongs >= 1 && popupManager != null)
-                    {
-                        popupManager.ShowReconnectionPopup(missedPongs, MAX_MISSED_PONGS);
-                    }
+                if (missedPongs >= 1 && popupManager != null)
+                {
+                    popupManager.ShowReconnectionPopup(missedPongs, MAX_MISSED_PONGS);
                 }
             }
 
             SendPing();
-            waitingForPong = true;
         }
     }
 
@@ -455,21 +451,29 @@ public class SocketIOManager : MonoBehaviour
         if (gameSocket != null && isConnected)
         {
             pingSendTime = Time.realtimeSinceStartup;
+            waitingForPong = true;
             gameSocket.Emit("ping");
         }
     }
 
+    private void OnPongReceivedNoArgs()
+    {
+        OnPongReceived(string.Empty);
+    }
 
     private void OnPongReceived(string data)
     {
         waitingForPong = false;
         lastPongTime = Time.time;
 
-        float rtt = Time.realtimeSinceStartup - pingSendTime;
-        int pingMs = Mathf.Max(1, Mathf.RoundToInt(rtt * 1000f));
-        if (uiManager != null)
+        if (pingSendTime > 0f)
         {
-            uiManager.UpdatePingDisplay(pingMs);
+            float rtt = Time.realtimeSinceStartup - pingSendTime;
+            int pingMs = Mathf.Max(1, Mathf.RoundToInt(rtt * 1000f));
+            if (uiManager != null)
+            {
+                uiManager.UpdatePingDisplay(pingMs);
+            }
         }
 
         if (missedPongs > 0)
