@@ -33,6 +33,9 @@ public class GameManager : MonoBehaviour
     internal bool isAutoPlaying;
     internal int autoPlayTotalRounds;
     internal int autoPlayRemainingRounds;
+    internal bool wasAutoPlayingBeforeFreeSpins;
+    internal int savedAutoPlayRemainingRounds;
+    internal int savedAutoPlayTotalRounds;
 
     internal bool isInFreeSpins;
     internal int freeSpinsRemaining;
@@ -617,6 +620,7 @@ public class GameManager : MonoBehaviour
         isAutoPlaying = true;
         autoPlayTotalRounds = rounds;
         autoPlayRemainingRounds = rounds;
+        wasAutoPlayingBeforeFreeSpins = false;
 
         uiManager.OnAutoPlayStarted();
         RequestSpin();
@@ -626,8 +630,39 @@ public class GameManager : MonoBehaviour
     {
         isAutoPlaying = false;
         autoPlayRemainingRounds = 0;
+        wasAutoPlayingBeforeFreeSpins = false;
 
         uiManager.OnAutoPlayStopped();
+    }
+
+    internal bool ShouldResumeAutoPlay()
+    {
+        return wasAutoPlayingBeforeFreeSpins && (savedAutoPlayTotalRounds == -1 || savedAutoPlayRemainingRounds > 0);
+    }
+
+    internal void ResumeAutoPlay()
+    {
+        if (!ShouldResumeAutoPlay()) return;
+
+        int remaining = savedAutoPlayRemainingRounds;
+        int total = savedAutoPlayTotalRounds;
+        wasAutoPlayingBeforeFreeSpins = false;
+
+        if (currentState != GameState.Idle) return;
+
+        double totalPay = GetTotalPay();
+        if (playerData.balance < totalPay)
+        {
+            if (popupManager != null) popupManager.ShowInsufficientFundsError();
+            return;
+        }
+
+        isAutoPlaying = true;
+        autoPlayTotalRounds = total;
+        autoPlayRemainingRounds = remaining;
+
+        uiManager.OnAutoPlayStarted();
+        RequestSpin();
     }
 
     #endregion
@@ -642,9 +677,15 @@ public class GameManager : MonoBehaviour
         waitingForFreeSpinStart = true;
         AudioManager.Instance?.PlayFreeSpinBg();
 
+        int prevTotal = autoPlayTotalRounds;
+        int prevRemaining = autoPlayRemainingRounds;
+
         if (isAutoPlaying)
         {
             StopAutoPlay();
+            wasAutoPlayingBeforeFreeSpins = true;
+            savedAutoPlayTotalRounds = prevTotal;
+            savedAutoPlayRemainingRounds = (prevTotal != -1) ? (prevRemaining - 1) : -1;
         }
 
         uiManager.OnFreeSpinsStarted(spins);
@@ -702,6 +743,7 @@ public class GameManager : MonoBehaviour
             spinCoroutine = null;
         }
 
+        wasAutoPlayingBeforeFreeSpins = false;
         if (isAutoPlaying)
         {
             StopAutoPlay();

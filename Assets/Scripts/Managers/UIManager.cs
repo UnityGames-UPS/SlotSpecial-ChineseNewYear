@@ -1123,6 +1123,12 @@ public class UIManager : MonoBehaviour
             yield return transitionBackFilm.DOFade(0f, 0.5f).WaitForCompletion();
             transitionBackFilm.gameObject.SetActive(false);
         }
+
+        // 4. Resume autoplay if it was active before free spins and has leftover rounds
+        if (gameManager != null && gameManager.ShouldResumeAutoPlay())
+        {
+            gameManager.ResumeAutoPlay();
+        }
     }
 
     internal void UpdateFreeSpinCount(int playedSpins, int totalSpins = -1)
@@ -1451,6 +1457,16 @@ public class UIManager : MonoBehaviour
                 }
                 else
                 {
+                    if (gameManager.isAutoPlaying)
+                    {
+                        int prevTotal = gameManager.autoPlayTotalRounds;
+                        int prevRemaining = gameManager.autoPlayRemainingRounds;
+                        gameManager.StopAutoPlay();
+                        gameManager.wasAutoPlayingBeforeFreeSpins = true;
+                        gameManager.savedAutoPlayTotalRounds = prevTotal;
+                        gameManager.savedAutoPlayRemainingRounds = (prevTotal != -1) ? (prevRemaining - 1) : -1;
+                    }
+
                     gameManager.isInFreeSpins = true;
                     gameManager.freeSpinsRemaining = resultData.freeGamesAwarded;
                     gameManager.freeSpinsUsed = 0;
@@ -1515,7 +1531,14 @@ public class UIManager : MonoBehaviour
         SetButtonActive(wheelSpinButton, wheelSpinButtonPortrait, false);
         if (gameManager == null || !gameManager.isInFreeSpins)
         {
-            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+            if (gameManager != null && gameManager.isAutoPlaying)
+            {
+                OnAutoPlayStarted();
+            }
+            else
+            {
+                SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+            }
         }
         else
         {
@@ -1598,7 +1621,18 @@ public class UIManager : MonoBehaviour
             transitionBackFilm.gameObject.SetActive(false);
         }
 
-        SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        if (gameManager != null && gameManager.isInFreeSpins)
+        {
+            SetSpinStopButtonStates(isSpinningState: true, isInteractable: false);
+        }
+        else if (gameManager != null && gameManager.isAutoPlaying)
+        {
+            OnAutoPlayStarted();
+        }
+        else
+        {
+            SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
+        }
 
         onComplete?.Invoke();
     }
