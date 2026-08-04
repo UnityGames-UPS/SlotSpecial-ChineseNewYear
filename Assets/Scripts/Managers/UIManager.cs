@@ -608,9 +608,7 @@ public class UIManager : MonoBehaviour
     internal void DisableControlsDuringWinAnimation()
     {
         SetBetControlsEnabled(false);
-        SetButtonActive(spinButton, spinButtonPortrait, false);
-        SetButtonActive(stopButton, stopButtonPortrait, false);
-        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
     }
 
     internal void EnableControlsAfterWinAnimation()
@@ -1081,6 +1079,7 @@ public class UIManager : MonoBehaviour
         if (gameLogoObject) gameLogoObject.SetActive(false);
 
         UpdateFreeSpinCount(0, spinsAwarded);
+        UpdateWinDisplay(0);
         gameManager.StartFirstFreeSpin();
     }
 
@@ -1241,7 +1240,9 @@ public class UIManager : MonoBehaviour
         if (winAmountText) winAmountText.text = FormatAmount(amount);
         if (winAmountTextPortrait) winAmountTextPortrait.text = "WIN " + FormatAmount(amount);
 
-        if (amount > 0)
+        bool showWinText = amount > 0 || (gameManager != null && gameManager.isInFreeSpins);
+
+        if (showWinText)
         {
             SetGameObjectActive(goodLuckObject, goodLuckObjectPortrait, false);
             SetGameObjectActive(winTextObject, winTextObjectPortrait, true);
@@ -1475,6 +1476,7 @@ public class UIManager : MonoBehaviour
                     
                     if (gameLogoObject) gameLogoObject.SetActive(false);
                     UpdateFreeSpinCount(0, resultData.freeGamesAwarded);
+                    UpdateWinDisplay(0);
                     
                     SetSpinStopButtonStates(isSpinningState: true, isInteractable: false);
                     SetBetControlsEnabled(false);
@@ -1733,9 +1735,7 @@ public class UIManager : MonoBehaviour
             }
         }
 
-        SetButtonActive(spinButton, spinButtonPortrait, false);
-        SetButtonActive(stopButton, stopButtonPortrait, false);
-        SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+        SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
 
         bool showTakeButton = (type != WinPopupType.BigWin);
         SetButtonActive(uwpTakeButton, uwpTakeButtonPortrait, showTakeButton);

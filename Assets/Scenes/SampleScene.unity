@@ -23515,7 +23515,7 @@ MonoBehaviour:
   normalSpinDuration: 2.5
   turboSpinDuration: 1.5
   quickSpinCycleDuration: 0.5
-  bigWinMultiplierThreshold: 20
+  bigWinMultiplierThreshold: 10
 --- !u!4 &1206269884
 Transform:
   m_ObjectHideFlags: 0
@@ -24483,7 +24483,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f521a04de7f494272a617b2719edd271, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SocketIOManager
-  testToken: d96936d8ee464dceabe592b4c63a0f5c
+  testToken: 2b1982b9c35e4050ba17a22ba67850b7
   gameManager: {fileID: 1206269883}
   uiManager: {fileID: 885496184}
   popupManager: {fileID: 1363796882}
