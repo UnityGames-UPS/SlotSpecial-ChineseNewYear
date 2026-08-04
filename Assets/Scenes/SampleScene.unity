@@ -24489,7 +24489,7 @@ MonoBehaviour:
   popupManager: {fileID: 1363796882}
   JSManager: {fileID: 1504510397}
   RaycastBlocker: {fileID: 1502470262}
-  enablePingDebug: 1
+  enablePingDebug: 0
 --- !u!4 &1236468291
 Transform:
   m_ObjectHideFlags: 0
