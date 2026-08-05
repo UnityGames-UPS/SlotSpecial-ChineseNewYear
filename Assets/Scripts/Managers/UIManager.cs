@@ -1254,18 +1254,17 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void AnimateBalanceUpdate(double newBalance, float durationOverride = -1f)
+    private void AnimateBalanceUpdate(double newBalance, double startBalance = -1f, float durationOverride = -1f)
     {
         if (balanceTween != null) balanceTween.Kill();
-
         hasOptimisticBalance = false;
         SetTMPText(balanceText, balanceTextPortrait, "BALANCE : " + FormatAmount(newBalance));
     }
 
-    private void AnimateWinUpdate(double winAmount)
+    private void AnimateWinUpdate(double targetWin, float duration = 0.8f)
     {
         if (winTween != null) winTween.Kill();
-        UpdateWinDisplay(winAmount);
+        UpdateWinDisplay(targetWin);
     }
 
     #endregion
@@ -1507,9 +1506,14 @@ public class UIManager : MonoBehaviour
 
             if (gameManager != null && gameManager.lastResult != null)
             {
-                double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
+                double prevBalance = gameManager.playerData.balance;
+                gameManager.playerData.balance += resultData.winInCash;
+
+                double targetWin = gameManager.isInFreeSpins
+                    ? gameManager.lastResult.serverTotalRoundWin
+                    : (gameManager.lastResult.grandTotalWin > 0 ? gameManager.lastResult.grandTotalWin : (gameManager.lastResult.winAmount + resultData.winInCash));
                 AnimateWinUpdate(targetWin);
-                AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
+                AnimateBalanceUpdate(gameManager.playerData.balance, prevBalance);
             }
             
             if (transitionBackFilm != null)
@@ -1565,9 +1569,10 @@ public class UIManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
         
-        SetSpinStopButtonStates(isSpinningState: false, isInteractable: false);
-        SetButtonActive(spinButton, spinButtonPortrait, false);
         SetButtonActive(autoSpinStopButton, autoSpinStopButtonPortrait, false);
+        SetButtonActive(stopButton, stopButtonPortrait, false);
+        SetButtonActive(spinButton, spinButtonPortrait, true);
+        SetButtonInteractable(spinButton, spinButtonPortrait, false);
 
         bool moneyBagDone = false;
         
@@ -1593,9 +1598,14 @@ public class UIManager : MonoBehaviour
 
             if (gameManager != null && gameManager.lastResult != null)
             {
-                double targetWin = gameManager.isInFreeSpins ? gameManager.lastResult.serverTotalRoundWin : gameManager.lastResult.winAmount;
+                double prevBalance = gameManager.playerData.balance;
+                gameManager.playerData.balance += resultData.winInCash;
+
+                double targetWin = gameManager.isInFreeSpins
+                    ? gameManager.lastResult.serverTotalRoundWin
+                    : (gameManager.lastResult.grandTotalWin > 0 ? gameManager.lastResult.grandTotalWin : (gameManager.lastResult.winAmount + resultData.winInCash));
                 AnimateWinUpdate(targetWin);
-                AnimateBalanceUpdate(gameManager.lastResult.playerData.balance);
+                AnimateBalanceUpdate(gameManager.playerData.balance, prevBalance);
             }
             
             if (transitionBackFilm != null)

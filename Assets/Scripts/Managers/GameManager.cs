@@ -272,7 +272,14 @@ public class GameManager : MonoBehaviour
     {
         if (lastResult != null)
         {
-            playerData = lastResult.playerData;
+            double featureDeferredWin = lastResult.GetTotalFeatureDeferredWins();
+            double reelStopBalance = lastResult.playerData != null ? (lastResult.playerData.balance - featureDeferredWin) : 0;
+
+            playerData = new PlayerData
+            {
+                balance = reelStopBalance,
+                currentBetIndex = lastResult.playerData != null ? lastResult.playerData.currentBetIndex : currentBetIndex
+            };
         }
 
         if (lastResult != null && lastResult.winAmount > 0 && lastResult.winLines != null && lastResult.winLines.Count > 0)

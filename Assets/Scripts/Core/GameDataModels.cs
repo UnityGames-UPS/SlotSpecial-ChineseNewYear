@@ -293,6 +293,7 @@ public class SpinResult
 {
     public List<List<int>> resultMatrix;  // Client uses int matrix
     public double winAmount;
+    public double grandTotalWin;
     public List<WinLine> winLines;
     public PlayerData playerData;
     public FreeSpinData freeSpinData;
@@ -310,6 +311,21 @@ public class SpinResult
     // Server-authoritative wheel data
     public USpinResultData uSpinData;
     public MoneyBagResultData moneyBagData;
+
+    public double GetMoneyBagWin()
+    {
+        return (moneyBagData != null && moneyBagData.triggered) ? moneyBagData.winInCash : 0;
+    }
+
+    public double GetUSpinCashWin()
+    {
+        return (uSpinData != null && uSpinData.triggered && uSpinData.type == "MULTIPLIER") ? uSpinData.winInCash : 0;
+    }
+
+    public double GetTotalFeatureDeferredWins()
+    {
+        return GetMoneyBagWin() + GetUSpinCashWin();
+    }
 }
 
 [Serializable]
@@ -525,10 +541,15 @@ public static class InitDataConverter
             totalRoundWin = serverResponse.payload.totalRoundWin;
         }
 
+        double grandTotalWinVal = serverResponse.payload.grandTotalWin > 0 
+            ? serverResponse.payload.grandTotalWin 
+            : (winAmountVal + (serverResponse.payload.moneyBag != null && serverResponse.payload.moneyBag.result != null ? serverResponse.payload.moneyBag.result.winInCash : 0) + (serverResponse.payload.uSpin != null && serverResponse.payload.uSpin.result != null ? serverResponse.payload.uSpin.result.winInCash : 0));
+
         var result = new SpinResult
         {
             resultMatrix = ConvertReelsToMatrix(serverResponse.payload.reels, serverResponse.matrix, serverResponse.payload.waysWins, gameConfig),
             winAmount = winAmountVal,
+            grandTotalWin = grandTotalWinVal,
             winLines = ConvertWinningLines(serverResponse.payload.waysWins, gameConfig),
 
             playerData = new PlayerData
