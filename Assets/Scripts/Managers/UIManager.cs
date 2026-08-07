@@ -183,6 +183,18 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text pingText;
     [SerializeField] private TMP_Text pingTextPortrait;
 
+    [Header("Platform Jackpot")]
+    [SerializeField] private TMP_Text grandJackpotText;
+    [SerializeField] private TMP_Text majorJackpotText;
+    [SerializeField] private TMP_Text minorJackpotText;
+    [SerializeField] private TMP_Text miniJackpotText;
+
+    [Header("Platform Jackpot - Portrait")]
+    [SerializeField] private TMP_Text grandJackpotTextPortrait;
+    [SerializeField] private TMP_Text majorJackpotTextPortrait;
+    [SerializeField] private TMP_Text minorJackpotTextPortrait;
+    [SerializeField] private TMP_Text miniJackpotTextPortrait;
+
     [Header("Expand-Shrink Controls")]
     [SerializeField] private Button expandButton;
     [SerializeField] private Button shrinkButton;
@@ -1263,6 +1275,16 @@ public class UIManager : MonoBehaviour
     internal void UpdatePingDisplay(string content)
     {
         SetTMPText(pingText, pingTextPortrait, content);
+    }
+
+    internal void UpdateJackpotDisplay(JackpotValues values)
+    {
+        if (values == null) return;
+
+        SetTMPText(grandJackpotText, grandJackpotTextPortrait, values.grandJackpot);
+        SetTMPText(majorJackpotText, majorJackpotTextPortrait, values.majorJackpot);
+        SetTMPText(minorJackpotText, minorJackpotTextPortrait, values.minorJackpot);
+        SetTMPText(miniJackpotText, miniJackpotTextPortrait, values.miniJackpot);
     }
 
     internal void UpdateBalanceDisplay()

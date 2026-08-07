@@ -13,6 +13,29 @@ public class InitData
     public ServerFeatures features;
     public ServerUIData uiData;
     public ServerPlayer player;
+    public JackpotData jackpotData;
+}
+
+[Serializable]
+public class JackpotData
+{
+    public JackpotValues values;
+}
+
+[Serializable]
+public class JackpotValues
+{
+    public string miniJackpot;
+    public string minorJackpot;
+    public string majorJackpot;
+    public string grandJackpot;
+}
+
+[Serializable]
+public class JackpotSyncData
+{
+    public string gameId;
+    public JackpotValues values;
 }
 
 [Serializable]
