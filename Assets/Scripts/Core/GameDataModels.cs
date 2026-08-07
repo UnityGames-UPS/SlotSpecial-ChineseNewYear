@@ -19,7 +19,8 @@ public class InitData
 [Serializable]
 public class JackpotData
 {
-    public JackpotValues values;
+    public JackpotValues values;//jackpotfeature
+
 }
 
 [Serializable]
