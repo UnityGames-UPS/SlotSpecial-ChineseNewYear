@@ -31,6 +31,7 @@ public class SocketIOManager : MonoBehaviour
     internal bool isInitialized;
     internal bool isExiting;   // True when CloseSocket is called intentionally (exit button)
     private bool isDestroyed;  // True when scene is unloading or application is quitting
+    private bool socketSetupStarted;
 
     private bool hasFocus = true;
     private float focusLostTime = 0f;
@@ -57,6 +58,7 @@ public class SocketIOManager : MonoBehaviour
         isConnected = false;
         isExiting = false;
         isDestroyed = false;
+        socketSetupStarted = false;
     }
 
     private void Start()
@@ -80,6 +82,12 @@ public class SocketIOManager : MonoBehaviour
 
     void ReceiveAuthToken(string jsonData)
     {
+        if (socketSetupStarted)
+        {
+            Debug.LogWarning("[SocketIO] Duplicate auth token ignored");
+            return;
+        }
+
         Debug.Log($"[SocketIO] Auth received");
 
         try
@@ -103,6 +111,16 @@ public class SocketIOManager : MonoBehaviour
 
     private void InitializeSocket()
     {
+        if (socketSetupStarted) return;
+        socketSetupStarted = true;
+
+        // Defensive: tear down any prior manager before building a new one
+        if (socketManager != null)
+        {
+            try { socketManager.Close(); } catch { }
+            socketManager = null;
+        }
+
         if (RaycastBlocker) RaycastBlocker.SetActive(true);
 
         SocketOptions options = new SocketOptions
