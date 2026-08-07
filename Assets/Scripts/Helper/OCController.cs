@@ -10,6 +10,7 @@ public class OCController : MonoBehaviour
     [SerializeField] private CanvasScaler canvasScaler;
     [SerializeField] private Transform slotObject;
     [SerializeField] private List<RectTransform> resizedObjects = new List<RectTransform>();
+    [SerializeField] private List<RectTransform> squareResizedObjects = new List<RectTransform>();
 
     [Header("Panel Toggle Settings")]
     [SerializeField] private GameObject landscapePanelObject;
@@ -28,6 +29,10 @@ public class OCController : MonoBehaviour
     [Header("Resized Object Dimensions")]
     [SerializeField] private Vector2 landscapeResizedObjectSize = new Vector2(1920f, 1080f);
     [SerializeField] private Vector2 portraitResizedObjectSize = new Vector2(1080f, 1920f);
+
+    [Header("Square Resized Object Dimensions")]
+    [SerializeField] private Vector2 landscapeSquareResizedObjectSize = new Vector2(1920f, 1080f);
+    [SerializeField] private Vector2 portraitSquareResizedObjectSize = new Vector2(1920f, 1920f);
 
     [Header("Slot Object Settings")]
     [SerializeField] private Vector3 landscapeSlotScale = Vector3.one;
@@ -144,6 +149,27 @@ public class OCController : MonoBehaviour
                     else
                     {
                         rect.sizeDelta = targetSize;
+                    }
+                }
+            }
+        }
+
+        // 4b. Resize Target RectTransforms (1920x1080 Landscape, 1920x1920 Portrait)
+        Vector2 targetSquareSize = isMobilePortrait ? portraitSquareResizedObjectSize : landscapeSquareResizedObjectSize;
+        if (squareResizedObjects != null)
+        {
+            foreach (var rect in squareResizedObjects)
+            {
+                if (rect != null)
+                {
+                    if (transitionDuration > 0)
+                    {
+                        Tween t = rect.DOSizeDelta(targetSquareSize, transitionDuration).SetEase(Ease.OutCubic);
+                        activeTweens.Add(t);
+                    }
+                    else
+                    {
+                        rect.sizeDelta = targetSquareSize;
                     }
                 }
             }
