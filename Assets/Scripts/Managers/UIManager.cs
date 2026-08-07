@@ -1281,10 +1281,16 @@ public class UIManager : MonoBehaviour
     {
         if (values == null) return;
 
-        SetTMPText(grandJackpotText, grandJackpotTextPortrait, values.grandJackpot);
-        SetTMPText(majorJackpotText, majorJackpotTextPortrait, values.majorJackpot);
-        SetTMPText(minorJackpotText, minorJackpotTextPortrait, values.minorJackpot);
-        SetTMPText(miniJackpotText, miniJackpotTextPortrait, values.miniJackpot);
+        SetTMPText(grandJackpotText, grandJackpotTextPortrait, FormatJackpotValue(values.grandJackpot));
+        SetTMPText(majorJackpotText, majorJackpotTextPortrait, FormatJackpotValue(values.majorJackpot));
+        SetTMPText(minorJackpotText, minorJackpotTextPortrait, FormatJackpotValue(values.minorJackpot));
+        SetTMPText(miniJackpotText, miniJackpotTextPortrait, FormatJackpotValue(values.miniJackpot));
+    }
+
+    private string FormatJackpotValue(string val)
+    {
+        if (string.IsNullOrEmpty(val)) return "$0.00";
+        return val.StartsWith("$") ? val : "$" + val;
     }
 
     internal void UpdateBalanceDisplay()
