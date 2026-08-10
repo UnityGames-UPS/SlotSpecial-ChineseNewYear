@@ -203,6 +203,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button shrinkButtonPortrait;
 
     private bool isExpanded = false;
+    private bool isSettingsPanelOpen = false;
 
     private Tween balanceTween;
     private Tween winTween;
@@ -308,6 +309,7 @@ public class UIManager : MonoBehaviour
         SetSpinStopButtonStates(isSpinningState: false, isInteractable: true);
         UpdateSpeedButtonsVisibility(gameManager.currentSpinSpeed);
 
+        isSettingsPanelOpen = false;
         SetGameObjectActive(settingsPanel, settingsPanelPortrait, false);
         if (gameRulesPanel) gameRulesPanel.SetActive(false);
         if (guidePanel) guidePanel.SetActive(false);
@@ -495,14 +497,14 @@ public class UIManager : MonoBehaviour
     {
         if (settingsOpenButton) settingsOpenButton.onClick.AddListener(() => { 
             AudioManager.Instance?.PlayButton(); 
-            if ((settingsPanel != null && settingsPanel.activeSelf) || (settingsPanelPortrait != null && settingsPanelPortrait.activeSelf))
+            if (isSettingsPanelOpen)
                 CloseSettingsPanel();
             else
                 OpenSettingsPanel();
         });
         if (settingsOpenButtonPortrait) settingsOpenButtonPortrait.onClick.AddListener(() => { 
             AudioManager.Instance?.PlayButton(); 
-            if ((settingsPanel != null && settingsPanel.activeSelf) || (settingsPanelPortrait != null && settingsPanelPortrait.activeSelf))
+            if (isSettingsPanelOpen)
                 CloseSettingsPanel();
             else
                 OpenSettingsPanel();
@@ -804,7 +806,7 @@ public class UIManager : MonoBehaviour
     private void OpenAutoPlayPanel()
     {
         AudioManager.Instance?.PlayAutoplayPanelOpen();
-        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
+        if (isSettingsPanelOpen)
             CloseSettingsPanelImmediate();
 
         SetGameObjectActive(autoPlayPanel, autoPlayPanelPortrait, true);
@@ -973,6 +975,8 @@ public class UIManager : MonoBehaviour
         if ((autoPlayPanel && autoPlayPanel.activeSelf) || (autoPlayPanelPortrait && autoPlayPanelPortrait.activeSelf))
             CloseAutoPlayPanelImmediate();
 
+        isSettingsPanelOpen = true;
+
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, false);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, true);
         SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, true);
@@ -982,7 +986,7 @@ public class UIManager : MonoBehaviour
             settingsPanel.SetActive(true);
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanel.AddComponent<CanvasGroup>();
-            cg.alpha = 0f;
+            cg.DOKill();
             cg.DOFade(1f, 0.35f);
         }
 
@@ -991,13 +995,15 @@ public class UIManager : MonoBehaviour
             settingsPanelPortrait.SetActive(true);
             CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanelPortrait.AddComponent<CanvasGroup>();
-            cg.alpha = 0f;
+            cg.DOKill();
             cg.DOFade(1f, 0.35f);
         }
     }
 
     private void CloseSettingsPanel()
     {
+        isSettingsPanelOpen = false;
+
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
         SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, false);
@@ -1006,6 +1012,7 @@ public class UIManager : MonoBehaviour
         {
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanel.AddComponent<CanvasGroup>();
+            cg.DOKill();
             cg.DOFade(0f, 0.35f).OnComplete(() =>
             {
                 settingsPanel.SetActive(false);
@@ -1016,6 +1023,7 @@ public class UIManager : MonoBehaviour
         {
             CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
             if (cg == null) cg = settingsPanelPortrait.AddComponent<CanvasGroup>();
+            cg.DOKill();
             cg.DOFade(0f, 0.35f).OnComplete(() =>
             {
                 settingsPanelPortrait.SetActive(false);
@@ -1025,6 +1033,8 @@ public class UIManager : MonoBehaviour
 
     private void CloseSettingsPanelImmediate()
     {
+        isSettingsPanelOpen = false;
+
         SetButtonActive(settingsOpenButton, settingsOpenButtonPortrait, true);
         SetButtonActive(settingsCloseButton, settingsCloseButtonPortrait, false);
         SetButtonActive(settingsBgCloseButton, settingsBgCloseButtonPortrait, false);
@@ -1032,14 +1042,22 @@ public class UIManager : MonoBehaviour
         if (settingsPanel)
         {
             CanvasGroup cg = settingsPanel.GetComponent<CanvasGroup>();
-            if (cg != null) cg.alpha = 0f;
+            if (cg != null)
+            {
+                cg.DOKill();
+                cg.alpha = 0f;
+            }
             settingsPanel.SetActive(false);
         }
 
         if (settingsPanelPortrait)
         {
             CanvasGroup cg = settingsPanelPortrait.GetComponent<CanvasGroup>();
-            if (cg != null) cg.alpha = 0f;
+            if (cg != null)
+            {
+                cg.DOKill();
+                cg.alpha = 0f;
+            }
             settingsPanelPortrait.SetActive(false);
         }
     }
@@ -1057,7 +1075,7 @@ public class UIManager : MonoBehaviour
 
     private void OpenGameRulesPanel()
     {
-        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
+        if (isSettingsPanelOpen)
         {
             CloseSettingsPanelImmediate();
         }
@@ -1082,7 +1100,7 @@ public class UIManager : MonoBehaviour
 
     private void OpenGuidePanel()
     {
-        if ((settingsPanel && settingsPanel.activeSelf) || (settingsPanelPortrait && settingsPanelPortrait.activeSelf))
+        if (isSettingsPanelOpen)
         {
             CloseSettingsPanelImmediate();
         }
