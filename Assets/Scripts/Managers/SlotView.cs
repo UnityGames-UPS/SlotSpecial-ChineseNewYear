@@ -105,10 +105,18 @@ public class SlotView : MonoBehaviour
 
     #region Initialization
 
-    private void Start()
+    private void Awake()
     {
         BuildSymbolSpriteArray();
         InitializeReels();
+    }
+
+    private void Start()
+    {
+        if (symbolSprites == null || symbolSprites.Length == 0)
+        {
+            BuildSymbolSpriteArray();
+        }
         DisableAllOverlays();
         SetupSymbolButtons();
     }
@@ -326,6 +334,17 @@ public class SlotView : MonoBehaviour
 
     private Sprite GetSymbolSprite(int symbolId)
     {
+        if (symbolSprites == null || symbolSprites.Length == 0)
+        {
+            BuildSymbolSpriteArray();
+        }
+
+        if (symbolSprites == null || symbolSprites.Length == 0)
+        {
+            Debug.LogError("[SlotView] symbolSprites array is null or empty after BuildSymbolSpriteArray!");
+            return null;
+        }
+
         // Validate symbolId range (0-12)
         if (symbolId < 0 || symbolId >= symbolSprites.Length)
         {

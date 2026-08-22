@@ -82,25 +82,35 @@ public class SocketIOManager : MonoBehaviour
 
     void ReceiveAuthToken(string jsonData)
     {
-        if (socketSetupStarted)
-        {
-            Debug.LogWarning("[SocketIO] Duplicate auth token ignored");
-            return;
-        }
-
         Debug.Log($"[SocketIO] Auth received");
 
         try
         {
             var authData = JsonUtility.FromJson<AuthTokenData>(jsonData);
-            authToken = authData.cookie;
-            socketURL = authData.socketURL;
+            string incomingToken = authData != null ? authData.cookie : authToken;
+            string incomingSocketURL = authData != null ? authData.socketURL : socketURL;
+            string incomingNameSpace = (authData != null && !string.IsNullOrEmpty(authData.nameSpace)) ? authData.nameSpace : nameSpace;
 
-            if (!string.IsNullOrEmpty(authData.nameSpace))
+            // If socket is already initialized and the incoming token matches our current token, bypass re-initialization
+            if (socketSetupStarted && authToken == incomingToken && socketURL == incomingSocketURL)
             {
-                nameSpace = authData.nameSpace;
+                Debug.LogWarning("[SocketIO] Matching auth token received, bypassing re-initialization.");
+                return;
             }
 
+            Debug.Log("[SocketIO] New or updated auth token received. Cleaning up old socket and re-initializing.");
+            authToken = incomingToken;
+            socketURL = incomingSocketURL;
+            nameSpace = incomingNameSpace;
+
+            // Defensive: clean up any existing socket before building a new one
+            if (socketManager != null)
+            {
+                try { socketManager.Close(); } catch { }
+                socketManager = null;
+            }
+
+            socketSetupStarted = false;
             InitializeSocket();
         }
         catch (Exception e)
@@ -586,11 +596,13 @@ public class SocketIOManager : MonoBehaviour
 
         if (socketManager != null)
         {
-            socketManager.Close();
+            try { socketManager.Close(); } catch { }
             socketManager = null;
         }
 
         isConnected = false;
+        isInitialized = false;
+        socketSetupStarted = false;
 
         // If the socket close does not fire OnSocketDisconnected (e.g. already disconnected),
         // still show the loading popup so the exit transition always looks clean.
@@ -624,10 +636,12 @@ public class SocketIOManager : MonoBehaviour
 
         if (socketManager != null)
         {
-            socketManager.Close();
+            try { socketManager.Close(); } catch { }
             socketManager = null;
         }
         isConnected = false;
+        isInitialized = false;
+        socketSetupStarted = false;
     }
 
     #endregion
