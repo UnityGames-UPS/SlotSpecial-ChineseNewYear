@@ -589,10 +589,10 @@ public class UIManager : MonoBehaviour
             SetSpinStopButtonStates(isSpinningState: true, isInteractable: true);
             SetBetControlsEnabled(false);
             SetButtonInteractable(settingsOpenButton, settingsOpenButtonPortrait, true);
+            UpdateWinDisplay(0);
         }
 
         UpdateBalanceDisplay();
-        UpdateWinDisplay(0);
 
         CloseAutoPlayPanelImmediate();
     }

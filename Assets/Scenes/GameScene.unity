@@ -1517,10 +1517,10 @@ RectTransform:
   - {fileID: 380623039}
   - {fileID: 213140934}
   - {fileID: 173060498}
-  - {fileID: 2030790026}
-  - {fileID: 1729874832}
   - {fileID: 344352411}
   - {fileID: 506386114}
+  - {fileID: 2030790026}
+  - {fileID: 1729874832}
   - {fileID: 758464195}
   m_Father: {fileID: 161473517}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -15213,10 +15213,10 @@ RectTransform:
   - {fileID: 1927834492}
   - {fileID: 1309569307}
   - {fileID: 598712218}
-  - {fileID: 925257478}
-  - {fileID: 877728122}
   - {fileID: 478029393}
   - {fileID: 260543320}
+  - {fileID: 925257478}
+  - {fileID: 877728122}
   - {fileID: 460680267}
   m_Father: {fileID: 360998097}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -24501,7 +24501,7 @@ MonoBehaviour:
   normalSpinDuration: 2.5
   turboSpinDuration: 1.5
   quickSpinCycleDuration: 0.5
-  bigWinMultiplierThreshold: 10
+  bigWinMultiplierThreshold: 5
 --- !u!4 &1206269884
 Transform:
   m_ObjectHideFlags: 0
@@ -25469,7 +25469,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f521a04de7f494272a617b2719edd271, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SocketIOManager
-  testToken: 51d05f622b9d423ab1f5a40698b95c79
+  testToken: 5d098f8cd0a94e948cb0e8ddea0c329a
   gameManager: {fileID: 1206269883}
   uiManager: {fileID: 885496184}
   popupManager: {fileID: 1363796882}
