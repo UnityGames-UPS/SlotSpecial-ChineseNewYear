@@ -73,14 +73,23 @@ public class SocketIOManager : MonoBehaviour
 
   void SendJackpotOpen()
   {
-    if(JackpotOpen)
+    if (JackpotOpen)
       return;
-    
+
     JackpotOpen = true;
 
-#if UNITY_WEBGL && !UNITY_EDITOR
-    gameSocket.Emit("JACKPOT_OPEN");
-#endif
+    var request = new JackpotOpenRequest
+    {
+      type = "JACKPOT_OPEN",
+      payload = new JackpotOpenPayload()
+    };
+
+    string json = JsonConvert.SerializeObject(request);
+    Debug.Log($"[SocketIO] Jackpot Open request: {json}");
+    if (gameSocket != null)
+    {
+      gameSocket.Emit("request", json);
+    }
 
     Invoke(nameof(ResetJackpotOpen), 2f);
   }
