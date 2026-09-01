@@ -95,7 +95,7 @@ public class SocketIOManager : MonoBehaviour
       gameSocket.Emit("request", json);
     }
 
-    Invoke(nameof(ResetJackpotOpen), 2f);
+    Invoke(nameof(ResetJackpotOpen), 1f);
   }
 
   void ResetJackpotOpen()
