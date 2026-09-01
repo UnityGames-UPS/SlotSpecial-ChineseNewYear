@@ -264,10 +264,8 @@ public class JackpotOpenRequest
 [Serializable]
 public class JackpotOpenPayload
 {
+  public string tier;
 }
-
-
-
 
 
 #endregion

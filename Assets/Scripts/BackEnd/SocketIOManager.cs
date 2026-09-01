@@ -64,14 +64,15 @@ public class SocketIOManager : MonoBehaviour
     isDestroyed = false;
     socketSetupStarted = false;
 
-    foreach(Button button in buttons)
+    for (int i = 0; i < buttons.Count; i++)
     {
-      button.onClick.RemoveAllListeners();
-      button.onClick.AddListener(SendJackpotOpen);
+      buttons[i].onClick.RemoveAllListeners();
+      string buttonName = buttons[i].name;
+      buttons[i].onClick.AddListener(() => SendJackpotOpen(buttonName));
     }
   }
 
-  void SendJackpotOpen()
+  void SendJackpotOpen(string JackpotType)
   {
     if (JackpotOpen)
       return;
@@ -81,7 +82,10 @@ public class SocketIOManager : MonoBehaviour
     var request = new JackpotOpenRequest
     {
       type = "JACKPOT_OPEN",
-      payload = new JackpotOpenPayload()
+      payload = new JackpotOpenPayload
+      {
+        tier = JackpotType
+      }
     };
 
     string json = JsonConvert.SerializeObject(request);
@@ -96,7 +100,7 @@ public class SocketIOManager : MonoBehaviour
 
   void ResetJackpotOpen()
   {
-    JackpotOpen = false;    
+    JackpotOpen = false;
   }
 
   private void Start()
